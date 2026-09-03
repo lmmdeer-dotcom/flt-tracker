@@ -367,31 +367,27 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <p class="note">颜色实时生效并保存在本机；字号、间距与布局不受影响。</p>
     </div>
 
-    <div class="sec-t">云端同步 <span class="note">Supabase 在线资料库 · 免配置自动同步</span></div>
+    <div class="sec-t">云端同步 <span class="note">自动备份到云端 · 换设备不丢数据</span></div>
     <div class="card">
       <div id="ghState"></div>
-      <div class="row" style="margin-top:12px">
-        <div class="cell" style="flex:1.5"><label class="f">数据库地址（Project URL）</label><input class="in" id="sbUrl"></div>
-        <div class="cell" style="flex:1"><label class="f">匿名密钥（anon key）</label><input class="in" type="password" id="sbKey" placeholder="eyJ…" autocomplete="off"></div>
-      </div>
-      <p class="note" style="margin-top:8px">已内置团队数据库，同事<b>无需任何设置</b>：打开页面自动拉取、每次保存自动上传。仅当更换数据库时才需改动上方两项。</p>
       <div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="supaTest()">测试云连接</button>
-        <button class="btn acc" onclick="syncNow(true)">立即同步</button>
+        <button class="btn" onclick="syncNow(true)">立即同步</button>
       </div>
       <div class="set-row"><div class="l"><b>打开页面时自动同步</b><span>每次载入自动从云端拉取合并</span></div>
         <button class="sw" id="ghAuto" onclick="togAuto()"></button></div>
       <div class="set-row"><div class="l"><b>保存后自动上传</b><span>每次新增 / 修改 / 删除约 3 秒后自动同步到云端</span></div>
         <button class="sw" id="ghPushAuto" onclick="togPushAuto()"></button></div>
-      <div class="advice" style="margin-top:10px;border-left-color:var(--forest)">
-        <b style="color:var(--forest2)">数据存哪里？</b>
-        <ol class="note" style="margin:6px 0 0 18px;line-height:2">
-          <li>团队数据存放在 Supabase 免费云数据库的 <code>flt_rows</code> 表中（<code id="ghRepoNm">hdjzbqksvrykqcymgccc.supabase.co</code>）。</li>
-          <li>同事打开页面即可读写同一份云端数据，按「成员」区分各人记录；无需注册、无需填任何密钥。</li>
-          <li>管理 / 清空云端数据：登录 supabase.com → 打开本项目 → <b>Table Editor</b>；作废旧密钥可在 Dashboard → Settings → API 中轮换。</li>
-        </ol>
-      </div>
-      <div id="ghLog" class="note" style="margin-top:10px;white-space:pre-wrap;font-size:12px;background:var(--paper2);border:1px dashed var(--line);border-radius:10px;padding:8px 10px;min-height:20px"></div>
+      <details style="margin-top:10px">
+        <summary style="color:var(--forest2);font-size:13px;cursor:pointer;font-weight:600">高级设置（更换数据库 / 查看日志）</summary>
+        <div class="row" style="margin-top:10px">
+          <div class="cell" style="flex:1.5"><label class="f">数据库地址（Project URL）</label><input class="in" id="sbUrl"></div>
+          <div class="cell" style="flex:1"><label class="f">匿名密钥（anon key）</label><input class="in" type="password" id="sbKey" placeholder="eyJ…" autocomplete="off"></div>
+        </div>
+        <div style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="supaTest()">测试云连接</button>
+        </div>
+        <div id="ghLog" class="note" style="margin-top:10px;white-space:pre-wrap;font-size:12px;background:var(--paper2);border:1px dashed var(--line);border-radius:10px;padding:8px 10px;min-height:20px"></div>
+      </details>
     </div>
 
     <div class="sec-t">数据与备份</div>
@@ -403,7 +399,9 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <input type="file" id="impFile" accept="application/json,.json" style="display:none" onchange="importAll(event)"></div>
       <div class="set-row"><div class="l"><b>载入示例数据</b><span>为当前成员生成约 10 周示例身体记录等</span></div>
         <button class="btn ghost" onclick="seedAll()">载入示例</button></div>
-      <div class="set-row"><div class="l"><b>清空全部数据</b><span>仅删除本机全部表数据与个人资料；云端数据保留，重新同步会拉回</span></div>
+      <div class="set-row"><div class="l"><b>仅保留当前成员数据</b><span>删除本机其他成员的记录，保留当前成员（切换成员后可用）</span></div>
+        <button class="btn danger" onclick="keepOnlyCurrent()">清理他人数据</button></div>
+      <div class="set-row"><div class="l"><b>清空全部数据</b><span>删除本机全部表数据与个人资料；云端数据保留，重新同步会拉回</span></div>
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
     </div>
     <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.2（单文件 · Supabase 云同步 · PWA 离线可用）</p>
@@ -578,7 +576,7 @@ function rHeader(){
   const hint=$("ownerHint");hint.innerHTML=p?`<span class="pill g">${esc(p.sex||"")} · ${esc(String(p.age||""))}岁 · ${esc(String(p.height||""))}cm</span>`:"";
 }
 function openOnboarding(force){const o=curOwner();const p=force?null:profile(o);const m=$("modalMask"),b=$("modalBox");
-  b.innerHTML=`<h2>${force?"添加新成员":"建立你的档案"}</h2><p class="note">用于 Mifflin-St Jeor 代谢估算与目标进度（同事可各建档案，云端共享）</p>
+  b.innerHTML=`<h2>${force?"添加新成员":"建立你的档案"}</h2><p class="note">用于 Mifflin-St Jeor 代谢估算与目标进度</p>
   <div class="row"><div class="cell"><label class="f">姓名 *</label><input class="in" id="obName" value="${esc(p?p.name:o)}"></div>
   <div class="cell"><label class="f">性别</label><select class="in" id="obSex"><option ${p&&p.sex==="女"?"selected":""}>女</option><option ${p&&p.sex==="男"?"selected":""}>男</option></select></div>
   <div class="cell"><label class="f">年龄</label><input class="in num-inline" type="number" id="obAge" value="${p?p.age:30}"></div></div>
@@ -606,6 +604,8 @@ window.saveProfile=function(){
   saveT("profiles");ss({owner:name});$("modalMask").classList.remove("on");
   if(!prev&&$("obSeed")&&$("obSeed").checked)seedAll();
   rHeader();memberOptions();showView("overview");toast(`欢迎，${name}！档案已保存`);
+  // 建档完成后自动同步一次（只拉取/推送自己的数据）
+  setTimeout(()=>{const autoSync=gs().ghAuto!==false;if(autoSync)syncNow(false);},600);
 };
 function addMemberBtn(){openOnboarding(true);}
 
@@ -948,11 +948,19 @@ function tomb(k,ids){const arr=Array.isArray(ids)?ids:[ids];const ids2=arr.filte
   const x=tombsAll();const b=x[k]||(x[k]={});const ts=now();
   ids2.forEach(id=>{b[id]={id,updatedAt:ts};});saveTombs(x);}
 function pruneTomb(k,id,minTs){const x=tombsAll();const b=x[k];if(b&&b[id]&&(!minTs||b[id].updatedAt<=minTs)){delete b[id];saveTombs(x);}}
-/* 用云端行合并本地表：云端墓碑 → 物理删除本地；云端新行 → 覆盖；本地较新 → 留给上传 */
+/* 用云端行合并本地表：云端墓碑 → 物理删除本地；云端新行 → 覆盖；本地较新 → 留给上传
+   【owner 隔离】只处理当前成员的数据，避免同事互相污染 */
 function applyCloud(tab,cloudRows){
-  const local=T[tab]||[];const byId={};local.forEach(r=>byId[r.id]=r);
+  const owner=curOwner();
+  const local=T[tab]||[];
+  // 本地只保留当前 owner 的数据（清理已污染的其他成员数据）
+  const byId={};
+  local.forEach(r=>{if(!owner||r.owner===owner)byId[r.id]=r;});
   let changed=false;
-  (cloudRows||[]).forEach(cr=>{const p=cr.payload||{};const l=byId[cr.id];
+  (cloudRows||[]).forEach(cr=>{const p=cr.payload||{};
+    // 跳过不属于当前成员的数据
+    if(owner&&p.owner&&p.owner!==owner)return;
+    const l=byId[cr.id];
     if(p.deleted){
       if(l&&((p.updatedAt||0)>=((l.updatedAt||0))||!l.updatedAt)){delete byId[cr.id];changed=true;}
       if(!(l&&(p.updatedAt||0)<((l.updatedAt||0))))pruneTomb(tab,cr.id,(p.updatedAt||0));
@@ -963,14 +971,17 @@ function applyCloud(tab,cloudRows){
   if(changed){T[tab]=Object.values(byId);localStorage.setItem(P+tab,jstr(T[tab]));}
   return changed;
 }
-/* 构造需上传行：本地比云端新 → 上传；未上传墓碑比云端新 → 上传墓碑 */
+/* 构造需上传行：本地比云端新 → 上传；未上传墓碑比云端新 → 上传墓碑
+   【owner 隔离】只推送当前成员的数据 */
 function buildPushRows(tab,cloudById){
-  const out=[];const ts=(tombsAll())[tab]||{};
-  (T[tab]||[]).forEach(r=>{const c=cloudById[r.id];
+  const out=[];const ts=(tombsAll())[tab]||{};const owner=curOwner();
+  (T[tab]||[]).forEach(r=>{
+    if(owner&&r.owner!==owner)return; // 跳过其他成员数据
+    const c=cloudById[r.id];
     if(!c||(r.updatedAt||0)>(c.payload.updatedAt||0))out.push({tbl:tab,id:r.id,payload:r});});
   Object.keys(ts).forEach(id=>{const tt=ts[id];const c=cloudById[id];
     if(!c||!c.payload.deleted||(tt.updatedAt||0)>(c.payload.updatedAt||0))
-      out.push({tbl:tab,id,payload:{id,updatedAt:tt.updatedAt,deleted:true,owner:((c&&c.payload.owner)||"")}});});
+      out.push({tbl:tab,id,payload:{id,updatedAt:tt.updatedAt,deleted:true,owner:((c&&c.payload.owner)||owner||"")}});});
   return out;
 }
 function clearUploadedTombs(rows){const x=tombsAll();let ch=false;
@@ -991,6 +1002,8 @@ window.supaTest=async function(){syncState("busy","连接测试中…");
   if(g.ok){toast("✓ 云连接正常：云端现有 "+g.data.length+" 条记录");syncState("on","云连接正常");ghLog("✓ 连接成功，云端现有 "+g.data.length+" 行");}
   else{syncState("err","连接失败");ghLog("✕ 连接失败："+g.err);toast("连接云端失败："+g.err,"err");}};
 window.syncNow=async function(manual){
+  const owner=curOwner();
+  if(!owner){if(manual)toast("请先建立个人档案后再同步","err");return;}
   if(window._syncBusy){if(manual)toast("正在同步中，请稍候","err");return;}
   window._syncBusy=true;
   try{
@@ -1037,6 +1050,23 @@ window.importAll=function(ev){const f=ev.target.files[0];if(!f)return;const rd=n
 window.wipeAll=async function(){const r=await ask("清空全部本地数据？（仅本机；云端数据保留，下次同步可能拉回）","输入 清空全部 以确认","清空全部");if(!r||r.v!=="清空全部")return toast("已取消");
   Object.keys(SCHEMA).forEach(k=>{T[k]=[];localStorage.removeItem(P+k);});
   localStorage.removeItem(P+"settings");localStorage.removeItem(P+"tombs");toast("全部数据已清空");location.reload();};
+window.keepOnlyCurrent=async function(){
+  const owner=curOwner();if(!owner){toast("请先选择或建立一个成员","err");return;}
+  const r=await ask(`只保留「${owner}」的数据，删除本机其他成员的记录？`,`输入 保留 以确认`,`保留`);
+  if(!r||r.v!=="保留")return toast("已取消");
+  let n=0;
+  Object.keys(SCHEMA).forEach(tab=>{
+    const before=T[tab].length;
+    T[tab]=T[tab].filter(x=>x.owner===owner);
+    const removed=before-T[tab].length;
+    if(removed){saveT(tab);n+=removed;}
+  });
+  // 清理墓碑中不属于当前成员的
+  const t=tombsAll();Object.keys(t).forEach(tab=>{const b=t[tab];if(!b)return;Object.keys(b).forEach(id=>{const local=T[tab].find(x=>x.id===id);if(local&&local.owner!==owner)delete b[id];});});
+  saveTombs(t);
+  memberOptions();rHeader();rOverview();RENDERS[cur]&&RENDERS[cur]();
+  toast(n?`已清理 ${n} 条其他成员记录`:`本机只有「${owner}」的数据，无需清理`);
+};
 
 /* ================= 启动 ================= */
 function boot(){
@@ -1046,10 +1076,14 @@ function boot(){
     openOnboarding(false);
     names=[];
   }
-  memberOptions();if(!curOwner()&&names.length)ss({owner:names[0]});
+  memberOptions();
+  /* 不自动选择第一个成员：防止同事设备被污染后自动切换到他人档案 */
+  const savedOwner=gs().owner;
+  if(!curOwner()&&names.length&&savedOwner&&names.includes(savedOwner))ss({owner:savedOwner});
   rOverview();
   const autoSync=gs().ghAuto!==false;
-  if(autoSync)setTimeout(()=>syncNow(false),900);
+  const owner=curOwner();
+  if(autoSync&&owner)setTimeout(()=>syncNow(false),900);
 }
 boot();
 /* PWA: 注册 Service Worker（仅 http(s) 环境，file:// 不报错） */
