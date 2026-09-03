@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
+<meta name="theme-color" id="metaTheme" content="#315f46">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="轻盈计划">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <title>轻盈计划 · 减脂健身追踪台</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -399,7 +406,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <div class="set-row"><div class="l"><b>清空全部数据</b><span>仅删除本机全部表数据与个人资料；云端数据保留，重新同步会拉回</span></div>
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.1（单文件 · Supabase 免配置云同步）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.2（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 
@@ -1045,6 +1052,14 @@ function boot(){
   if(autoSync)setTimeout(()=>syncNow(false),900);
 }
 boot();
+/* PWA: 注册 Service Worker（仅 http(s) 环境，file:// 不报错） */
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').then(function(r){console.log('SW registered',r.scope)}).catch(function(e){console.log('SW failed',e)});});
+}
+/* 主题色跟随当前 --forest 变量，更新 status bar */
+function updateMetaTheme(){var m=document.getElementById('metaTheme');if(!m)return;var s=getComputedStyle(document.documentElement).getPropertyValue('--forest').trim();if(s)m.setAttribute('content',s);}
+window.addEventListener('load',updateMetaTheme);
+setTimeout(updateMetaTheme,500);
 </script>
 </body>
 </html>
