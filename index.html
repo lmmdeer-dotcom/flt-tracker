@@ -158,7 +158,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
   <header class="mast">
     <div class="brand"><b>轻盈计划</b> · 减脂健身追踪台</div>
     <div class="mast-right">
-      <button class="sync-pill" id="syncPill" onclick="go('settings')"><i></i><span id="syncPillTxt">云同步 · 未连接</span></button>
+      <button class="sync-pill" id="syncPill" onclick="go('settings')"><i></i><span id="syncPillTxt">云同步 · 已连接</span></button>
     </div>
   </header>
 
@@ -282,6 +282,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
           <button class="btn ghost mini" onclick="weekShift(-1)">‹ 上周</button>
           <b class="serif" id="trWeekLabel" style="flex:1;text-align:center"></b>
           <button class="btn ghost mini" onclick="weekShift(1)">下周 ›</button></div>
+        <div id="trProgress" style="margin-bottom:6px"></div>
         <div id="trPlanList"></div>
       </div>
     </div>
@@ -359,30 +360,28 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <p class="note">颜色实时生效并保存在本机；字号、间距与布局不受影响。</p>
     </div>
 
-    <div class="sec-t">云端同步 <span class="note">GitHub 资料库</span></div>
+    <div class="sec-t">云端同步 <span class="note">Supabase 在线资料库 · 免配置自动同步</span></div>
     <div class="card">
       <div id="ghState"></div>
       <div class="row" style="margin-top:12px">
-        <div class="cell"><label class="f">仓库主人</label><input class="in" id="ghOwner"></div>
-        <div class="cell"><label class="f">仓库名</label><input class="in" id="ghRepo"></div>
+        <div class="cell" style="flex:1.5"><label class="f">数据库地址（Project URL）</label><input class="in" id="sbUrl"></div>
+        <div class="cell" style="flex:1"><label class="f">匿名密钥（anon key）</label><input class="in" type="password" id="sbKey" placeholder="eyJ…" autocomplete="off"></div>
       </div>
-      <label class="f">访问令牌（Access Token）</label>
-      <input class="in" type="password" id="ghToken" placeholder="ghp_ / github_pat_ 开头…" autocomplete="off">
+      <p class="note" style="margin-top:8px">已内置团队数据库，同事<b>无需任何设置</b>：打开页面自动拉取、每次保存自动上传。仅当更换数据库时才需改动上方两项。</p>
       <div style="margin:12px 0;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="ghTest()">测试连接</button>
+        <button class="btn" onclick="supaTest()">测试云连接</button>
         <button class="btn acc" onclick="syncNow(true)">立即同步</button>
       </div>
       <div class="set-row"><div class="l"><b>打开页面时自动同步</b><span>每次载入自动从云端拉取合并</span></div>
         <button class="sw" id="ghAuto" onclick="togAuto()"></button></div>
-      <div class="set-row"><div class="l"><b>编辑后自动推送</b><span>改动约 5 秒后自动上传云端</span></div>
+      <div class="set-row"><div class="l"><b>保存后自动上传</b><span>每次新增 / 修改 / 删除约 3 秒后自动同步到云端</span></div>
         <button class="sw" id="ghPushAuto" onclick="togPushAuto()"></button></div>
       <div class="advice" style="margin-top:10px;border-left-color:var(--forest)">
-        <b style="color:var(--forest2)">如何获取令牌（管理员操作一次即可，同事共用同一令牌）</b>
+        <b style="color:var(--forest2)">数据存哪里？</b>
         <ol class="note" style="margin:6px 0 0 18px;line-height:2">
-          <li>打开 GitHub → 右上头像 → <b>Settings</b> → 底部 <b>Developer settings</b> → <b>Fine-grained personal access tokens</b> → <b>Generate new token</b>。</li>
-          <li>Repository access 选择 <b>Only select repositories</b>，勾选 <b><code id="ghRepoNm">flt-data</code></b>。</li>
-          <li>Permissions → <b>Contents: Read and write</b>，其余保持 None。</li>
-          <li>生成后复制粘贴到上方输入框，点「测试连接」。令牌仅保存在使用者的浏览器本地，不会写入备份文件。</li>
+          <li>团队数据存放在 Supabase 免费云数据库的 <code>flt_rows</code> 表中（<code id="ghRepoNm">hdjzbqksvrykqcymgccc.supabase.co</code>）。</li>
+          <li>同事打开页面即可读写同一份云端数据，按「成员」区分各人记录；无需注册、无需填任何密钥。</li>
+          <li>管理 / 清空云端数据：登录 supabase.com → 打开本项目 → <b>Table Editor</b>；作废旧密钥可在 Dashboard → Settings → API 中轮换。</li>
         </ol>
       </div>
       <div id="ghLog" class="note" style="margin-top:10px;white-space:pre-wrap;font-size:12px;background:var(--paper2);border:1px dashed var(--line);border-radius:10px;padding:8px 10px;min-height:20px"></div>
@@ -397,10 +396,10 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <input type="file" id="impFile" accept="application/json,.json" style="display:none" onchange="importAll(event)"></div>
       <div class="set-row"><div class="l"><b>载入示例数据</b><span>为当前成员生成约 10 周示例身体记录等</span></div>
         <button class="btn ghost" onclick="seedAll()">载入示例</button></div>
-      <div class="set-row"><div class="l"><b>清空全部数据</b><span>删除本机全部表数据与个人资料（云端文件不受影响）</span></div>
+      <div class="set-row"><div class="l"><b>清空全部数据</b><span>仅删除本机全部表数据与个人资料；云端数据保留，重新同步会拉回</span></div>
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.0（离线单文件 · 数据可云端同步）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.1（单文件 · Supabase 免配置云同步）</p>
   </section>
 </div>
 
@@ -446,7 +445,7 @@ const gs=()=>{try{return JSON.parse(localStorage.getItem(P+"settings"))||{};}cat
 function ss(patch){const s=gs();for(const k in patch){if(patch[k]===undefined)delete s[k];else s[k]=patch[k];}localStorage.setItem(P+"settings",jstr(s));applySettings();}
 function saveT(k){localStorage.setItem(P+k,jstr(T[k]));markDirty(k);}
 function loadT(k){try{T[k]=JSON.parse(localStorage.getItem(P+k))||[];}catch(e){T[k]=[];}}
-function markDirty(k){window._dirty=window._dirty||{};window._dirty[k]=now();if((gs().ghPushAuto!==false)&&gs().gh&&gs().gh.token){clearTimeout(window._autoPushT);window._autoPushT=setTimeout(()=>syncNow(false),5000);}}
+function markDirty(k){window._dirty=window._dirty||{};window._dirty[k]=now();if(gs().ghPushAuto!==false&&!window._syncBusy){clearTimeout(window._autoPushT);window._autoPushT=setTimeout(()=>syncNow(false),3000);}}
 function curOwner(){return gs().owner||"";}
 function owned(k){const o=curOwner();return o?T[k].filter(r=>r.owner===o):T[k].slice();}
 function byDate(k,o,date){return owned(k).filter(r=>r.date===date);}
@@ -460,9 +459,8 @@ function applySettings(){const s=gs();
   st.setProperty("--terra",acc);st.setProperty("--terra2",shade(acc,-.16));st.setProperty("--terraSoft",shade(acc,.82));
   const c1=$("sColorMain"),c2=$("sColorAcc");
   if(c1&&c1.value!==main)c1.value=main;if(c2&&c2.value!==acc)c2.value=acc;
-  if(gs().gh&&gs().gh.token&&$("ghToken"))$("ghToken").value=gs().gh.token;
-  if($("ghOwner"))$("ghOwner").value=(gs().gh&&gs().gh.owner)||"lmmdeer-dotcom";
-  if($("ghRepo"))$("ghRepo").value=(gs().gh&&gs().gh.repo)||"flt-data";
+  if($("sbUrl")&&!$("sbUrl").value)$("sbUrl").value=cloudCfg().url;
+  if($("sbKey")&&!$("sbKey").value)$("sbKey").value=cloudCfg().key;
   const a=$("ghAuto"),b=$("ghPushAuto");
   if(a)a.className="sw"+(gs().ghAuto===false?"":" on");
   if(b)b.className="sw"+(gs().ghPushAuto===false?"":" on");
@@ -731,15 +729,14 @@ function rBody(){
     return `<tr><td>${esc(r.date)}</td><td><b>${r.kg}</b></td><td>${r.bf??"—"}</td><td>${dd===null?"—":dd>0?`<b class="up">+${dd}</b>`:dd<0?`<b class="down">${dd}</b>`:"0"}</td><td><button class="x" onclick="delRow('body','${r.id}')">✕</button></td></tr>`;}).join("");
   $("bList").innerHTML=rows.length?`<table class="tbl"><tr><th>日期</th><th>体重 kg</th><th>体脂 %</th><th>较前日</th><th></th></tr>${html}</table>`:'<div class="empty">—</div>';
 }
-window.delRow=function(k,id){T[k]=T[k].filter(x=>x.id!==id);saveT(k);RENDERS[cur]&&RENDERS[cur]();rOverview();};
+window.delRow=function(k,id){tomb(k,id);T[k]=T[k].filter(x=>x.id!==id);saveT(k);RENDERS[cur]&&RENDERS[cur]();rOverview();};
 window.clearTab=async function(k){
   const labels={body:"身体记录",meals:"饮食记录",logs:"训练日志",checks:"习惯打卡",diary:"日记",reviews:"每周复盘"};
-  if(k==="body"){const r=await ask(`清空「${curOwner()}」的全部身体记录？`,"输入 清空 以确认","清空");if(!r||r.v!=="清空")return toast("已取消");T.body=T.body.filter(x=>x.owner!==curOwner());}
-  else if(k==="meals"){T.meals=T.meals.filter(x=>x.owner!==curOwner());}
-  else if(k==="logs"){T.logs=T.logs.filter(x=>x.owner!==curOwner());}
-  else if(k==="checks"){T.checks=T.checks.filter(x=>x.owner!==curOwner());}
-  else if(k==="diary"){const r=await ask("清空全部日记？","输入 清空 以确认","清空");if(!r||r.v!=="清空")return toast("已取消");T.diary=T.diary.filter(x=>x.owner!==curOwner());}
-  else if(k==="reviews"){T.reviews=T.reviews.filter(x=>x.owner!==curOwner());}
+  const o=curOwner();
+  if(k==="body"){const r=await ask(`清空「${o}」的全部身体记录？`,"输入 清空 以确认","清空");if(!r||r.v!=="清空")return toast("已取消");}
+  if(k==="diary"){const r=await ask("清空全部日记？","输入 清空 以确认","清空");if(!r||r.v!=="清空")return toast("已取消");}
+  tomb(k,T[k].filter(x=>x.owner===o).map(x=>x.id));
+  T[k]=T[k].filter(x=>x.owner!==o);
   saveT(k);RENDERS[cur]&&RENDERS[cur]();toast(labels[k]+"已清空");rOverview&&rOverview();
 };
 window.seedBody=function(){if(!profile(curOwner())){toast("请先建立个人档案","err");openOnboarding(false);return;}seedBodyData();toast("已填入约 11 周示例身体数据");rBody();rOverview();};
@@ -788,10 +785,10 @@ function rTemplate(){const o=curOwner();const wd=["一","二","三","四","五",
   <select class="in" id="tk${i}" style="width:92px;flex:none">${["力量","有氧","瑜伽","普拉提","拉伸","HIIT","其他"].map(k=>`<option${t.kind===k?" selected":""}>${k}</option>`).join("")}</select></div>`;}).join("");
 }
 window.saveTemplate=function(){const o=curOwner();for(let i=0;i<7;i++){const name=$("tp"+i).value.trim();const kind=$("tk"+i).value;
-    const ex=T.plans.find(x=>x.owner===o&&x.dow===i);if(!name){if(ex){T.plans=T.plans.filter(x=>x.id!==ex.id);}continue;}
+    const ex=T.plans.find(x=>x.owner===o&&x.dow===i);if(!name){if(ex){tomb("plans",ex.id);T.plans=T.plans.filter(x=>x.id!==ex.id);}continue;}
     if(ex){ex.name=name;ex.kind=kind;upRec(ex);}else T.plans.push({id:uid(),owner:o,dow:i,name,kind,createdAt:now(),updatedAt:now()});}
   saveT("plans");toast("周训练模板已保存");rTrain();};
-window.clearTemplate=function(){T.plans=T.plans.filter(x=>x.owner!==curOwner());saveT("plans");toast("模板已清空");rTrain();};
+window.clearTemplate=function(){const o=curOwner();tomb("plans",T.plans.filter(x=>x.owner===o).map(x=>x.id));T.plans=T.plans.filter(x=>x.owner!==o);saveT("plans");toast("模板已清空");rTrain();};
 function rPlanList(){const o=curOwner();const wd=["周一","周二","周三","周四","周五","周六","周日"];
   const items=T.plans.filter(x=>x.owner===o).sort((a,b)=>a.dow-b.dow);
   if(!items.length){$("trPlanList").innerHTML='<div class="empty">左侧先设置每周训练模板</div>';$("trProgress").innerHTML="";}
@@ -809,7 +806,7 @@ function rPlanList(){const o=curOwner();const wd=["周一","周二","周三","�
 }
 window.toggleLog=function(date,plId){
   const o=curOwner();const ex=owned("logs").find(x=>x.date===date);
-  if(ex){T.logs=T.logs.filter(x=>x.id!==ex.id);}
+  if(ex){tomb("logs",ex.id);T.logs=T.logs.filter(x=>x.id!==ex.id);}
   else{const pl=T.plans.find(x=>x.id===plId);const rec={id:uid(),owner:o,date,name:pl?pl.name:"自由训练",kind:pl?pl.kind:"其他",note:"计划打卡",createdAt:now()};upRec(rec);T.logs.push(rec);}
   saveT("logs");rTrain();rOverview();
 };
@@ -824,9 +821,9 @@ function rTrain(){if(!$("lDate").value)$("lDate").value=today();rTemplate();
 
 /* ================= 习惯 ================= */
 window.addHabit=function(){const o=curOwner();const n=$("hNew").value.trim();if(!n){toast("填写习惯名称","err");return;}const rec={id:uid(),owner:o,name:n,createdAt:now()};upRec(rec);T.habits.push(rec);saveT("habits");$("hNew").value="";toast("习惯已添加");rHabits();};
-window.delHabit=function(id){T.habits=T.habits.filter(x=>x.id!==id);T.checks=T.checks.filter(x=>x.habitId!==id);saveT("habits");saveT("checks");rHabits();};
+window.delHabit=function(id){const cs=T.checks.filter(x=>x.habitId===id).map(x=>x.id);tomb("habits",id);if(cs.length)tomb("checks",cs);T.habits=T.habits.filter(x=>x.id!==id);T.checks=T.checks.filter(x=>x.habitId!==id);saveT("habits");saveT("checks");rHabits();};
 window.togCheck=function(hid){const o=curOwner();const d=$("hDate").value||today();const ex=T.checks.find(x=>x.owner===o&&x.habitId===hid&&x.date===d);
-  if(ex){if(ex.done){T.checks=T.checks.filter(x=>x.id!==ex.id);}else{ex.done=true;upRec(ex);}}
+  if(ex){if(ex.done){tomb("checks",ex.id);T.checks=T.checks.filter(x=>x.id!==ex.id);}else{ex.done=true;upRec(ex);}}
   else{const rec={id:uid(),owner:o,habitId:hid,date:d,done:true,createdAt:now()};upRec(rec);T.checks.push(rec);}
   saveT("checks");rHabits();rOverview&&rOverview();};
 function rHabits(){
@@ -888,81 +885,134 @@ function rSettings(){const o=curOwner(),p=profile(o);
     <div class="set-row"><div class="l"><b>新增团队成员</b><span>为同事建立独立档案，数据按成员分开</span></div>
     <button class="btn acc mini" onclick="addMemberBtn()">＋ 添加成员</button></div>`
     :`<div class="empty">还没有个人档案。<button class="btn" onclick="openOnboarding(false)">立即建立</button></div>`;
-  ghRender();
+  cloudRender();
 }
-window.ghRender=function(){const c=gs().gh||{};
-  const gsEl=$("ghState");if(!gsEl)return;
-  const on=c.token?"已连接":"未连接";
-  gsEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <span class="pill ${c.token?"g":"r"}">${c.token?"●":"○"} ${on}</span>
-    <span class="note">仓库 <code>${esc(c.owner||"lmmdeer-dotcom")}/${esc(c.repo||"flt-data")}</code></span>
+window.cloudRender=function(){const c=cloudCfg();
+  const el=$("ghState");if(!el)return;
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="pill g">● 已连接（内置）</span>
+    <span class="note">数据库 <code>${esc(c.url.replace(/^https:\/\//,""))}</code></span>
     <span class="note" id="ghLast"></span></div>`;
-  const l=$("ghLast");if(l&&c.lastSync)l.textContent="上次同步 "+new Date(c.lastSync).toLocaleString("zh-CN",{hour12:false});
+  const l=$("ghLast");const s=gs().cloud;if(l&&s&&s.lastSync)l.textContent="上次同步 "+new Date(s.lastSync).toLocaleString("zh-CN",{hour12:false});
 };
-/* ============ GitHub 云同步 ============ */
-const GH_REPO={owner:"lmmdeer-dotcom",repo:"flt-data"};
-const FILES={body:"body.json",meals:"meals.json",plans:"plans.json",logs:"logs.json",habits:"habits.json",checks:"checks.json",reviews:"reviews.json",diary:"diary.json",profiles:"profiles.json"};
-function ghCfg(){const s=gs();return {token:(s.gh&&s.gh.token)||$("ghToken").value.trim()||"",owner:($("ghOwner").value.trim()||GH_REPO.owner),repo:($("ghRepo").value.trim()||GH_REPO.repo)};}
-function b64e(str){const b=new TextEncoder().encode(str);let bin="";b.forEach(x=>bin+=String.fromCharCode(x));return btoa(bin);}
-function b64d(b64){const bin=atob(b64);const u=Uint8Array.from(bin,c=>c.charCodeAt(0));return new TextDecoder().decode(u);}
-async function ghApi(method,url,body,token){
-  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),20000);
-  try{const res=await fetch("https://api.github.com"+url,{method,headers:{Authorization:"Bearer "+token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},body:body?JSON.stringify(body):undefined,signal:ctl.signal});
+/* ============ Supabase 云同步（免配置：密钥内嵌、打开即用、保存即同步） ============ */
+const SUPA={url:"https://hdjzbqksvrykqcymgccc.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkanpicWtzdnJ5a3FjeW1nY2NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MjI5OTgsImV4cCI6MjEwMzk5ODk5OH0.0_Vw75Si30brtyRP8bjcwvxvFHA0uPQhJAo2U9-qAIE"};
+function cloudCfg(){const s=gs().cloud||{};return {url:((s.url||"").trim()||SUPA.url),key:((s.key||"").trim()||SUPA.key)};}
+function ghLog(txt){const el=$("ghLog");if(el){el.textContent=txt+"\n"+(el.textContent||"").split("\n").slice(0,80).join("\n");}}
+async function supaFetch(method,path,body,extraH){
+  const c=cloudCfg();const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),25000);
+  try{const h={apikey:c.key,Authorization:"Bearer "+c.key};
+    if(body!==undefined)h["Content-Type"]="application/json";
+    for(const k in(extraH||{}))h[k]=extraH[k];
+    const res=await fetch(c.url+path,{method,headers:h,body:body!==undefined?jstr(body):undefined,signal:ctl.signal});
     let data=null;try{data=await res.json();}catch(e){}
-    return {ok:res.ok,status:res.status,data};}catch(e){return {ok:false,status:0,data:{message:"网络错误: "+e.message}};}
+    const cr=res.headers.get("content-range")||"";
+    return {ok:res.ok,status:res.status,data,cr};}
+  catch(e){return {ok:false,status:0,data:null,cr:"",msg:"网络错误: "+e.message};}
   finally{clearTimeout(t);}
 }
-async function ghGetFile(tab,token){
-  const p=FILES[tab];const r=await ghApi("GET",`/repos/${ghCfg().owner}/${ghCfg().repo}/contents/${p}`,null,token);
-  if(r.status===404)return {found:false,rows:[],sha:null};
-  if(!r.ok)return {err:r.data&&r.data.message||("HTTP "+r.status)};
-  try{const rows=(JSON.parse(b64d(r.data.content))||{}).rows||[];return {found:true,rows,sha:r.data.sha};}catch(e){return {err:"解析失败"};}
+async function sbFetchAll(){
+  const out=[];let start=0;
+  for(let i=0;i<10;i++){
+    const r=await supaFetch("GET","/rest/v1/flt_rows?select=tbl,id,payload,updated_at,deleted",undefined,{"Range-Unit":"items","Range":`${start}-${start+999}`,"Prefer":"count=exact"});
+    if(!r.ok)return {err:(r.data&&r.data.message)||(r.msg)||("HTTP "+r.status)};
+    const rows=r.data||[];out.push(...rows);
+    const m=/^items\s+(\d+)-(\d+)\/(\d+)$/.exec(r.cr||"");
+    if(!m)break;
+    const total=+m[3],end=+m[2];
+    if(total===0||end>=total-1||rows.length<1000)break;
+    start=end+1;
+  }
+  return {ok:true,data:out};
 }
-async function ghPutFile(tab,rows,sha,token){
-  const p=FILES[tab];const body={message:"sync "+tab+" "+new Date().toISOString(),content:b64e(JSON.stringify({v:1,updatedAt:Date.now(),rows}))};
-  if(sha)body.sha=sha;
-  const r=await ghApi("PUT",`/repos/${ghCfg().owner}/${ghCfg().repo}/contents/${p}`,body,token);
-  return r.ok?{ok:true}:{err:r.data&&(r.data.message||jstr(r.data))||("HTTP "+r.status)};
+async function sbUpsert(rows){
+  let i=0;const res=[];
+  while(i<rows.length){
+    const chunk=rows.slice(i,i+400);i+=400;
+    const r=await supaFetch("POST","/rest/v1/flt_rows?on_conflict=tbl,id",chunk,{"Prefer":"resolution=merge-duplicates,return=minimal"});
+    if(!r.ok)return {err:(r.data&&r.data.message)||(r.msg)||("HTTP "+r.status)};
+  }
+  return {ok:true};
 }
-const sig=rows=>{try{return JSON.stringify(rows.slice().sort((a,b)=>a.id<b.id?-1:1));}catch(e){return "";}};
-function mergeRows(local,remote){
-  const map={};local.forEach(r=>map[r.id]=JSON.parse(jstr(r)));
-  remote.forEach(r=>{const ex=map[r.id];if(!ex)map[r.id]=JSON.parse(jstr(r));
-    else if((r.updatedAt||0)>(ex.updatedAt||0))map[r.id]=JSON.parse(jstr(r));});
-  const out=Object.values(map).filter(r=>!r.deleted);return out;
+/* 本地墓碑：删除被可靠传到云端（防止云端旧数据“复活”） */
+function tombsAll(){try{return JSON.parse(localStorage.getItem(P+"tombs"))||{};}catch(e){return{};}}
+function saveTombs(x){localStorage.setItem(P+"tombs",jstr(x));}
+function tomb(k,ids){const arr=Array.isArray(ids)?ids:[ids];const ids2=arr.filter(Boolean);if(!ids2.length)return;
+  const x=tombsAll();const b=x[k]||(x[k]={});const ts=now();
+  ids2.forEach(id=>{b[id]={id,updatedAt:ts};});saveTombs(x);}
+function pruneTomb(k,id,minTs){const x=tombsAll();const b=x[k];if(b&&b[id]&&(!minTs||b[id].updatedAt<=minTs)){delete b[id];saveTombs(x);}}
+/* 用云端行合并本地表：云端墓碑 → 物理删除本地；云端新行 → 覆盖；本地较新 → 留给上传 */
+function applyCloud(tab,cloudRows){
+  const local=T[tab]||[];const byId={};local.forEach(r=>byId[r.id]=r);
+  let changed=false;
+  (cloudRows||[]).forEach(cr=>{const p=cr.payload||{};const l=byId[cr.id];
+    if(p.deleted){
+      if(l&&((p.updatedAt||0)>=((l.updatedAt||0))||!l.updatedAt)){delete byId[cr.id];changed=true;}
+      if(!(l&&(p.updatedAt||0)<((l.updatedAt||0))))pruneTomb(tab,cr.id,(p.updatedAt||0));
+    }else{
+      if(!l){byId[cr.id]=JSON.parse(jstr(p));changed=true;}
+      else if((p.updatedAt||0)>(l.updatedAt||0)){byId[cr.id]=JSON.parse(jstr(p));changed=true;}
+    }});
+  if(changed){T[tab]=Object.values(byId);localStorage.setItem(P+tab,jstr(T[tab]));}
+  return changed;
 }
-function ghLog(txt){const el=$("ghLog");if(el){el.textContent=txt+"\n"+(el.textContent||"").split("\n").slice(0,60).join("\n");}}
+/* 构造需上传行：本地比云端新 → 上传；未上传墓碑比云端新 → 上传墓碑 */
+function buildPushRows(tab,cloudById){
+  const out=[];const ts=(tombsAll())[tab]||{};
+  (T[tab]||[]).forEach(r=>{const c=cloudById[r.id];
+    if(!c||(r.updatedAt||0)>(c.payload.updatedAt||0))out.push({tbl:tab,id:r.id,payload:r});});
+  Object.keys(ts).forEach(id=>{const tt=ts[id];const c=cloudById[id];
+    if(!c||!c.payload.deleted||(tt.updatedAt||0)>(c.payload.updatedAt||0))
+      out.push({tbl:tab,id,payload:{id,updatedAt:tt.updatedAt,deleted:true,owner:((c&&c.payload.owner)||"")}});});
+  return out;
+}
+function clearUploadedTombs(rows){const x=tombsAll();let ch=false;
+  rows.forEach(r=>{if(r.payload&&r.payload.deleted){const b=x[r.tbl];if(b&&b[r.id]){delete b[r.id];ch=true;}}});
+  if(ch)saveTombs(x);}
+/* 通用合并（导入备份用）：按 id 合并、取 updatedAt 较新者、剔除墓碑 */
+function mergeRows(local,incoming){
+  const byId={};(local||[]).forEach(r=>byId[r.id]=JSON.parse(jstr(r)));
+  (incoming||[]).forEach(r=>{const ex=byId[r.id];if(!ex)byId[r.id]=JSON.parse(jstr(r));
+    else if((r.updatedAt||0)>(ex.updatedAt||0))byId[r.id]=JSON.parse(jstr(r));});
+  return Object.values(byId).filter(r=>!r.deleted);}
 function syncState(st,txt){window._syncState=st;const pill=$("syncPill"),t=$("syncPillTxt");
   pill.className="sync-pill"+(st==="ok"?" synced":st==="busy"?" busy":st==="err"?" err":st==="on"?" on":"");
   if(t)t.textContent=txt||(st==="busy"?"同步中…":st==="ok"?"已同步":"云同步 · 未连接");}
-window.refreshSyncPill=function(){const s=gs();if(s.gh&&s.gh.token&&window._syncState!=="busy")syncState("on",(window._lastSync?("已同步 "+window._lastSync):"云同步 · 已连接"));};
-window.ghTest=async function(){const c=ghCfg();if(!c.token){toast("请先粘贴访问令牌","err");return;}syncState("busy","连接测试中…");
-  const r=await ghApi("GET","/user",null,c.token);
-  if(r.ok){toast("连接成功："+((r.data.login)||"ok"));syncState("on","云同步 · 已连接");ghLog("✓ 连接成功 "+c.owner+"/"+c.repo);}
-  else{syncState("err","连接失败");ghLog("✕ 连接失败："+(r.data&&r.data.message||r.data));toast("连接失败："+(r.data&&r.data.message||"请检查令牌"),"err");}};
+window.refreshSyncPill=function(){if(window._syncState!=="busy")syncState(window._syncState==="err"?"err":"ok",(window._lastSync?("已同步 "+window._lastSync):"云同步 · 已连接"));};
+window.supaTest=async function(){syncState("busy","连接测试中…");
+  const g=await sbFetchAll();
+  if(g.ok){toast("✓ 云连接正常：云端现有 "+g.data.length+" 条记录");syncState("on","云连接正常");ghLog("✓ 连接成功，云端现有 "+g.data.length+" 行");}
+  else{syncState("err","连接失败");ghLog("✕ 连接失败："+g.err);toast("连接云端失败："+g.err,"err");}};
 window.syncNow=async function(manual){
-  const c=ghCfg();if(!c.token){if(manual)toast("请先在「设置 → 云端同步」粘贴访问令牌","err");return;}
-  if(!manual)$("ghLog")&&($("ghLog").textContent="");syncState("busy","同步中…");
-  const ssx=gs();ss({gh:{...ssx.gh,token:c.token,owner:c.owner,repo:c.repo}});
-  const tables=Object.keys(FILES);const res=[];
-  for(const tab of tables){
-    const g=await ghGetFile(tab,c.token);if(g.err){res.push(tab+" ✕ "+g.err);continue;}
-    loadT(tab);const local=T[tab];
-    const merged=mergeRows(local,g.rows);
-    const sigL=sig(local),sigM=sig(merged),sigR=sig(g.rows);
-    if(sigL!==sigM){T[tab]=merged;localStorage.setItem(P+tab,jstr(merged));}
-    if(!g.found){if(merged.length){const p=await ghPutFile(tab,merged,null,c.token);res.push(tab+(p.ok?" 已建":" ✕ "+(p.err||"")));}else res.push(tab+" 空");}
-    else if(sigM!==sigR){const p=await ghPutFile(tab,merged,g.sha,c.token);
-      if(p.ok)res.push(tab+" ⇅ 已同步("+merged.length+")");
-      else if((p.err||"").indexOf("409")>=0||(p.err||"").indexOf("must match")>=0){const g2=await ghGetFile(tab,c.token);const m2=mergeRows(T[tab],g2.rows);if(sig(m2)!==sig(g2.rows)){const p2=await ghPutFile(tab,m2,g2.sha,c.token);res.push(tab+(p2.ok?" ⇅ 冲突已合并":" ✕ 重试失败"));}else res.push(tab+" 已是最新");}
-      else res.push(tab+" ✕ "+(p.err||""));
-    } else res.push(tab+" 已最新");
-  }
-  const ss2=gs();ss({gh:{...(ss2.gh||{}),token:c.token,owner:c.owner,repo:c.repo,lastSync:Date.now()}});
-  window._lastSync=new Date().toLocaleTimeString("zh-CN",{hour12:false});
-  syncState("ok","已同步 "+window._lastSync);ghLog(res.join("\n"));
-  applySettings();rOverview();RENDERS[cur]&&RENDERS[cur]();
-  const bad=res.filter(x=>x.indexOf("✕")>=0).length;toast(bad?"同步完成，但有 "+bad+" 项异常":"✓ 云端双向同步完成",bad?"err":"ok");
+  if(window._syncBusy){if(manual)toast("正在同步中，请稍候","err");return;}
+  window._syncBusy=true;
+  try{
+    const c=cloudCfg();
+    if(!manual&&$("ghLog"))$("ghLog").textContent="";
+    syncState("busy","同步中…");
+    const log=[];log.push("云端 "+c.url.replace(/^https:\/\//,""));
+    const g=await sbFetchAll();
+    if(!g.ok){syncState("err","同步失败");ghLog("✕ 拉取失败："+g.err);if(manual)toast("连接云端失败："+g.err,"err");return;}
+    log.push("拉取 "+g.data.length+" 行");
+    const byTbl={};g.data.forEach(r=>{(byTbl[r.tbl]=byTbl[r.tbl]||[]).push(r);});
+    const cloudById={};g.data.forEach(r=>cloudById[r.id]=r);
+    let chg=0;
+    Object.keys(SCHEMA).forEach(tab=>{loadT(tab);if(applyCloud(tab,byTbl[tab]||[]))chg++;});
+    let pushRows=[];
+    Object.keys(SCHEMA).forEach(tab=>{pushRows=pushRows.concat(buildPushRows(tab,cloudById));});
+    const tombs=pushRows.filter(r=>r.payload&&r.payload.deleted);
+    if(pushRows.length){
+      const up=await sbUpsert(pushRows);
+      if(!up.ok){syncState("err","同步失败");ghLog("✕ 上传失败："+up.err);if(manual)toast("上传云端失败："+up.err,"err");return;}
+      clearUploadedTombs(tombs);log.push("上传 "+pushRows.length+" 行");
+    } else log.push("无新改动");
+    const s=gs();ss({cloud:{url:c.url,key:c.key,lastSync:Date.now()}});
+    window._lastSync=new Date().toLocaleTimeString("zh-CN",{hour12:false});
+    syncState("ok","已同步 "+window._lastSync);
+    ghLog(log.join("\n"));
+    applySettings();rOverview();RENDERS[cur]&&RENDERS[cur]();
+    toast(chg?"✓ 同步完成，合并 "+chg+" 张表":"✓ 已与云端同步","ok");
+  } finally { window._syncBusy=false; }
 };
 
 /* ================= 备份 ================= */
@@ -970,16 +1020,16 @@ window.exportAll=function(){const data={app:"轻盈计划-减脂追踪台",v:1,a
   Object.keys(SCHEMA).forEach(k=>{data.tables[k]=T[k];});
   const blob=new Blob([jstr(data)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download="轻盈计划-备份-"+today()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
-  toast("备份已导出（不含令牌）");};
+  toast("备份已导出（不含云密钥）");};
 window.importAll=function(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.tables)throw 0;
     Object.keys(SCHEMA).forEach(k=>{if(d.tables[k]&&Array.isArray(d.tables[k])){T[k]=mergeRows(T[k],d.tables[k]);localStorage.setItem(P+k,jstr(T[k]));}});
     if(d.settings){const s=gs();ss({themeMain:d.settings.themeMain||s.themeMain,themeAcc:d.settings.themeAcc||s.themeAcc});}
     toast("导入合并完成");memberOptions();rHeader();showView("overview");}catch(e){toast("文件格式不正确","err");}};
   rd.readAsText(f);ev.target.value="";};
-window.wipeAll=async function(){const r=await ask("清空全部本地数据？（云端文件不受影响）","输入 清空全部 以确认","清空全部");if(!r||r.v!=="清空全部")return toast("已取消");
+window.wipeAll=async function(){const r=await ask("清空全部本地数据？（仅本机；云端数据保留，下次同步可能拉回）","输入 清空全部 以确认","清空全部");if(!r||r.v!=="清空全部")return toast("已取消");
   Object.keys(SCHEMA).forEach(k=>{T[k]=[];localStorage.removeItem(P+k);});
-  localStorage.removeItem(P+"settings");toast("全部数据已清空");location.reload();};
+  localStorage.removeItem(P+"settings");localStorage.removeItem(P+"tombs");toast("全部数据已清空");location.reload();};
 
 /* ================= 启动 ================= */
 function boot(){
@@ -992,7 +1042,7 @@ function boot(){
   memberOptions();if(!curOwner()&&names.length)ss({owner:names[0]});
   rOverview();
   const autoSync=gs().ghAuto!==false;
-  if(autoSync&&gs().gh&&gs().gh.token)setTimeout(()=>syncNow(false),900);
+  if(autoSync)setTimeout(()=>syncNow(false),900);
 }
 boot();
 </script>
