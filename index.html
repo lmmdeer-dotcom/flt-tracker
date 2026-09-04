@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tadashi健身加油">
-<link rel="manifest" href="./manifest.json?v=1.7">
-    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.7">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.7">
+<link rel="manifest" href="./manifest.json?v=1.7.1">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.7.1">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.7.1">
 <title>Tadashi健身加油！</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -491,7 +491,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
       </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.7.0（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.7.1（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 <div class="pwa-tip" id="pwaTip">
@@ -1230,7 +1230,130 @@ const FOOD_DB=[
 // D. 健身健康脂肪/坚果（每 100g；杏仁/腰果/核桃/花生酱 已存在，未重复加）
 {name:"碧根果",kcal:691,p:9.0,c:14.0,f:72.0,units:{份:28}},
 {name:"奇亚籽",kcal:486,p:17.0,c:42.0,f:31.0,units:{勺:12}},
-{name:"亚麻籽",kcal:534,p:18.0,c:29.0,f:42.0,units:{勺:10}}];
+{name:"亚麻籽",kcal:534,p:18.0,c:29.0,f:42.0,units:{勺:10}},
+
+// === v1.7.1 中国食物成分表精选扩展（基于 Sanotsu/china-food-composition-data v3 第6版精选 ~119 条，按生活单位配量）===
+// 涵盖：动物内脏/海鲜全谱/坚果种子/谷物豆类/各品类水果/蔬菜叶菜等
+{name:"炼乳（甜，罐头）",kcal:332,p:8.0,c:55.4,f:8.7,units:{勺:15}},
+{name:"奶皮子",kcal:460,p:12.2,c:6.3,f:42.9,units:{勺:15}},
+{name:"奶油",kcal:879,p:0.7,c:0.9,f:97.0,units:{勺:15}},
+{name:"酥油",kcal:860,p:1.5,c:1.1,f:94.4,units:{勺:15}},
+{name:"全脂奶粉（代表值）",kcal:482,p:19.9,c:50.5,f:22.3,units:{勺:25}},
+{name:"全脂甜奶粉（代表值）",kcal:485,p:20.2,c:49.6,f:22.9,units:{勺:25}},
+{name:"奶豆腐（鲜）",kcal:305,p:46.2,c:12.5,f:7.8,units:{块:30}},
+{name:"纯牛奶（代表值，全脂）",kcal:65,p:3.3,c:4.9,f:3.6,units:{杯:250}},
+{name:"鲜牛奶（代表值，全脂）",kcal:67,p:3.4,c:5.1,f:3.7,units:{杯:250}},
+{name:"栗子（鲜）［板栗］",kcal:188,p:4.2,c:42.2,f:0.7,units:{把:30}},
+{name:"松子（生）",kcal:665,p:12.6,c:19.0,f:62.6,units:{把:30}},
+{name:"榛子（炒）",kcal:611,p:30.5,c:13.1,f:50.3,units:{把:30}},
+{name:"山核桃（熟）［小核桃］",kcal:658,p:8.3,c:21.3,f:64.5,units:{把:30}},
+{name:"花生仁（生）",kcal:574,p:24.8,c:21.7,f:44.3,units:{把:30}},
+{name:"葵花子（生）",kcal:609,p:23.9,c:19.1,f:49.9,units:{把:30}},
+{name:"南瓜子（炒）［白瓜子］",kcal:582,p:36.0,c:7.9,f:46.1,units:{把:30}},
+{name:"西瓜子",kcal:567,p:30.3,c:13.4,f:46.5,units:{把:30}},
+{name:"豆浆粉",kcal:426,p:19.7,c:66.8,f:9.4,units:{勺:20}},
+{name:"花豆（干，红）",kcal:328,p:19.1,c:62.7,f:1.3,units:{把:30}},
+{name:"小豆粥",kcal:62,p:1.2,c:13.7,f:0.4,units:{把:30}},
+{name:"桃（代表值）",kcal:42,p:0.6,c:10.1,f:0.1,units:{个:200}},
+{name:"李子",kcal:38,p:0.7,c:8.7,f:0.2,units:{个:200}},
+{name:"杏",kcal:38,p:0.9,c:9.1,f:0.1,units:{个:200}},
+{name:"枣（鲜）",kcal:125,p:1.1,c:30.5,f:0.3,units:{颗:15}},
+{name:"石榴（代表值）",kcal:72,p:1.3,c:18.5,f:0.2,units:{个:200}},
+{name:"桑葚（代表值）",kcal:57,p:1.7,c:13.8,f:0.4,units:{份:100}},
+{name:"无花果",kcal:65,p:1.5,c:16.0,f:0.1,units:{个:200}},
+{name:"杨桃",kcal:31,p:0.6,c:7.4,f:0.2,units:{个:200}},
+{name:"椰子",kcal:241,p:4.0,c:31.3,f:12.1,units:{个:1500}},
+{name:"牛蹄筋（生）",kcal:151,p:34.1,c:2.6,f:0.5,units:{份:100}},
+{name:"牛肚",kcal:72,p:14.5,c:0.0,f:1.6,units:{份:100}},
+{name:"牛肝",kcal:139,p:19.8,c:6.2,f:3.9,units:{份:100}},
+{name:"牛脑",kcal:149,p:12.5,c:0.1,f:11.0,units:{份:100}},
+{name:"牛舌",kcal:196,p:17.0,c:2.0,f:13.3,units:{份:100}},
+{name:"牛肾",kcal:94,p:15.6,c:2.6,f:2.4,units:{份:100}},
+{name:"牛心",kcal:106,p:15.4,c:3.1,f:3.5,units:{份:100}},
+{name:"牛百叶（黑）",kcal:70,p:13.2,c:0.0,f:1.9,units:{份:100}},
+{name:"猪大肠",kcal:196,p:6.9,c:0.0,f:18.7,units:{份:100}},
+{name:"猪耳",kcal:176,p:19.1,c:0.0,f:11.1,units:{份:100}},
+{name:"猪皮",kcal:363,p:27.4,c:0.0,f:28.1,units:{份:100}},
+{name:"猪肚",kcal:110,p:15.2,c:0.7,f:5.1,units:{份:100}},
+{name:"猪肺",kcal:84,p:12.2,c:0.1,f:3.9,units:{份:100}},
+{name:"猪脑",kcal:131,p:10.8,c:0.0,f:9.8,units:{份:100}},
+{name:"猪肾（fat8g）［猪腰子］",kcal:137,p:16.0,c:0.0,f:8.1,units:{份:100}},
+{name:"猪心",kcal:119,p:16.6,c:1.1,f:5.3,units:{份:100}},
+{name:"猪血",kcal:55,p:12.2,c:0.9,f:0.3,units:{份:100}},
+{name:"羊大肠",kcal:75,p:13.4,c:0.0,f:2.4,units:{份:100}},
+{name:"羊肚",kcal:87,p:12.2,c:1.8,f:3.4,units:{份:100}},
+{name:"羊肺",kcal:96,p:16.2,c:2.5,f:2.4,units:{份:100}},
+{name:"羊肝",kcal:134,p:17.9,c:7.4,f:3.6,units:{份:100}},
+{name:"羊脑",kcal:142,p:11.3,c:0.1,f:10.7,units:{份:100}},
+{name:"羊舌",kcal:225,p:19.4,c:4.8,f:14.2,units:{份:100}},
+{name:"羊肾",kcal:96,p:16.6,c:1.0,f:2.8,units:{份:100}},
+{name:"羊心",kcal:113,p:13.8,c:2.0,f:5.5,units:{份:100}},
+{name:"羊血",kcal:57,p:6.8,c:6.9,f:0.2,units:{份:100}},
+{name:"鸽",kcal:201,p:16.5,c:1.7,f:14.2,units:{份:100}},
+{name:"鹌鹑",kcal:110,p:20.2,c:0.2,f:3.1,units:{份:100}},
+{name:"火鸡肝",kcal:143,p:20.0,c:3.1,f:5.6,units:{份:100}},
+{name:"火鸡腿（熟）",kcal:100,p:16.7,c:6.6,f:0.7,units:{份:100}},
+{name:"鸡（代表值）",kcal:145,p:20.3,c:0.9,f:6.7,units:{份:100}},
+{name:"鸡肝",kcal:121,p:16.6,c:2.8,f:4.8,units:{份:100}},
+{name:"鸡心",kcal:172,p:15.9,c:0.6,f:11.8,units:{份:100}},
+{name:"鸡血",kcal:49,p:7.8,c:4.1,f:0.2,units:{份:100}},
+{name:"鸭（代表值）",kcal:240,p:15.5,c:0.2,f:19.7,units:{份:100}},
+{name:"鸭皮",kcal:538,p:6.5,c:15.1,f:50.2,units:{份:100}},
+{name:"鸭翅",kcal:146,p:16.5,c:6.3,f:6.1,units:{份:100}},
+{name:"鸭掌",kcal:150,p:26.9,c:6.2,f:1.9,units:{份:100}},
+{name:"鸭肠",kcal:129,p:14.2,c:0.4,f:7.8,units:{份:100}},
+{name:"鸭肝",kcal:128,p:14.5,c:0.5,f:7.5,units:{份:100}},
+{name:"鸭心",kcal:143,p:12.8,c:2.9,f:8.9,units:{份:100}},
+{name:"鸭血（白鸭）",kcal:108,p:13.6,c:12.4,f:0.4,units:{份:100}},
+{name:"鸭肫",kcal:92,p:17.9,c:2.1,f:1.3,units:{份:100}},
+{name:"鹅肝",kcal:129,p:15.2,c:9.3,f:3.4,units:{份:100}},
+{name:"鹅肫",kcal:100,p:19.6,c:1.1,f:1.9,units:{份:100}},
+{name:"鹅血",kcal:74,p:18.6,c:0.0,f:0.0,units:{份:100}},
+{name:"大白菜（代表值）",kcal:20,p:1.6,c:3.4,f:0.2,units:{份:100}},
+{name:"娃娃菜",kcal:13,p:1.9,c:2.4,f:0.2,units:{份:100}},
+{name:"香菜（鲜）［芫荽］",kcal:33,p:1.8,c:6.2,f:0.4,units:{份:100}},
+{name:"苋菜（绿，鲜）",kcal:30,p:2.8,c:5.0,f:0.3,units:{份:100}},
+{name:"茼蒿（鲜）［蓬蒿菜，艾菜］",kcal:24,p:1.9,c:3.9,f:0.3,units:{份:100}},
+{name:"油麦菜",kcal:12,p:1.1,c:2.1,f:0.4,units:{份:100}},
+{name:"红薯叶",kcal:27,p:3.1,c:5.1,f:0,units:{份:100}},
+{name:"南瓜（栗面）",kcal:36,p:1.4,c:8.8,f:0.1,units:{个:400}},
+{name:"西葫芦",kcal:19,p:0.8,c:3.8,f:0.2,units:{个:400}},
+{name:"韭黄（韭芽，黄色）",kcal:24,p:2.3,c:3.9,f:0.2,units:{份:100}},
+{name:"韭菜",kcal:25,p:2.4,c:4.5,f:0.4,units:{份:100}},
+{name:"豆角",kcal:34,p:2.5,c:6.7,f:0.2,units:{份:100}},
+{name:"龙豆（鲜）",kcal:36,p:3.7,c:5.0,f:0.5,units:{份:100}},
+{name:"马铃薯（蒸）",kcal:69,p:3.0,c:15.3,f:0,units:{份:100}},
+{name:"鸡蛋黄",kcal:328,p:15.2,c:3.4,f:28.2,units:{份:30}},
+{name:"鸡蛋黄粉",kcal:644,p:31.6,c:5.3,f:55.1,units:{份:30}},
+{name:"鸭蛋",kcal:180,p:12.6,c:3.1,f:13.0,units:{份:50}},
+{name:"鸭蛋白",kcal:47,p:9.9,c:1.8,f:0,units:{份:50}},
+{name:"鸭蛋黄",kcal:378,p:14.5,c:4.0,f:33.8,units:{份:30}},
+{name:"海鸭蛋",kcal:243,p:12.7,c:16.9,f:13.8,units:{份:50}},
+{name:"鹅蛋",kcal:196,p:11.1,c:2.8,f:15.6,units:{份:50}},
+{name:"鹅蛋白",kcal:48,p:8.9,c:3.2,f:0,units:{份:50}},
+{name:"鹅蛋黄",kcal:324,p:15.5,c:6.2,f:26.4,units:{份:30}},
+{name:"鹌鹑蛋",kcal:160,p:12.8,c:2.1,f:11.1,units:{份:50}},
+{name:"高粱米",kcal:360,p:10.4,c:74.7,f:3.1,units:{份:100}},
+{name:"荞麦",kcal:337,p:9.3,c:73.0,f:2.3,units:{份:100}},
+{name:"青稞",kcal:342,p:8.1,c:75.0,f:1.5,units:{份:100}},
+{name:"小米面",kcal:357,p:7.2,c:77.7,f:2.1,units:{份:100}},
+{name:"黄米",kcal:351,p:9.7,c:76.9,f:1.5,units:{份:100}},
+{name:"小麦粉（代表值）",kcal:359,p:12.4,c:74.1,f:1.7,units:{份:100}},
+{name:"挂面（代表值）",kcal:353,p:11.4,c:75.1,f:0.9,units:{份:100}},
+{name:"玉米面（白）",kcal:352,p:8.0,c:73.1,f:4.5,units:{份:100}},
+{name:"玉米粒（黄、干）",kcal:327,p:8.0,c:79.2,f:0.8,units:{份:100}},
+{name:"稻米（代表值）",kcal:346,p:7.9,c:77.2,f:0.9,units:{份:100}},
+{name:"海蜇皮",kcal:33,p:3.7,c:3.8,f:0.3,units:{份:100}},
+{name:"海蜇头",kcal:74,p:6.0,c:11.8,f:0.3,units:{份:100}},
+{name:"墨鱼（鲜，曼氏无针乌贼）",kcal:83,p:15.2,c:3.4,f:0.9,units:{只:200}},
+{name:"蛏子",kcal:40,p:7.3,c:2.1,f:0.3,units:{只:50}},
+{name:"鲍鱼（皱纹鲍）",kcal:75,p:13.7,c:4.8,f:0.1,units:{只:50}},
+{name:"蛤蜊（代表值）",kcal:62,p:10.1,c:2.8,f:1.1,units:{只:50}},
+{name:"螺（代表值）",kcal:100,p:15.7,c:6.6,f:1.2,units:{份:100}},
+{name:"螺蛳",kcal:59,p:7.5,c:6.0,f:0.6,units:{只:50}},
+{name:"田螺",kcal:60,p:11.0,c:3.6,f:0.2,units:{只:50}},
+{name:"泥鳅",kcal:96,p:17.9,c:1.7,f:2.0,units:{条:150}},
+];
 
 function searchFood(q){
   if(!q)return[];q=q.trim();if(!q)return[];
