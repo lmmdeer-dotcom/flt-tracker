@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tadashi健身加油">
-<link rel="manifest" href="./manifest.json?v=1.6">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.6">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.6">
+<link rel="manifest" href="./manifest.json?v=1.7">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.7">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.7">
 <title>Tadashi健身加油！</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -150,6 +150,18 @@ textarea.in{resize:vertical;min-height:80px}
 .pwa-tip.on{display:flex}
 .pwa-tip button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;white-space:nowrap}
 .sec-t{font-family:var(--serif);font-size:21px;color:var(--forest2);margin:22px 2px 12px;display:flex;align-items:center;gap:10px}
+.mood-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.mood-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px 5px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:all .18s;flex:1;min-width:54px;font-family:inherit}
+.mood-btn img{width:34px;height:34px;object-fit:contain}
+.mood-btn span{font-size:11px;font-weight:600;color:var(--mute)}
+.mood-btn:hover{border-color:var(--forest);background:var(--forestSoft)}
+.mood-btn.on{border-color:var(--forest);background:var(--forestSoft);box-shadow:0 0 0 2px var(--forest) inset}
+.mood-btn.on span{color:var(--forest)}
+.mood-thumb{width:46px;height:46px;object-fit:contain;border-radius:8px;background:var(--paper2);padding:4px}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{padding:5px 12px;border-radius:99px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-size:12.5px;font-family:inherit;transition:all .15s}
+.chip:hover{border-color:var(--forest);color:var(--forest)}
+.chip.on{background:var(--forest);color:#fff;border-color:var(--forest)}
 .sec-t::after{content:"";flex:1;height:1px;background:var(--line)}
 /* 设置项 */
 .set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line2);flex-wrap:wrap}
@@ -287,10 +299,13 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <!-- 已添加列表 -->
         <div id="mFoodList" style="margin-top:10px"></div>
 
-        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn acc" onclick="saveMeal()">保存整餐</button>
+          <button class="btn ghost mini" onclick="addFav()">⭐ 收藏这餐</button>
+          <button class="btn ghost mini" onclick="toggleFavPanel()">📚 收藏夹</button>
           <button class="btn ghost mini" onclick="clearFoodItems()">清空列表</button>
           <button class="btn danger mini" onclick="clearTab('meals')">清空当日</button></div>
+        <div id="mFavPanel" style="display:none;margin-top:10px;padding:10px 12px;background:var(--paper2);border-radius:10px;border:1px dashed var(--line)"></div>
 
         <!-- 手动填写（折叠） -->
         <details style="margin-top:14px"><summary class="note" style="cursor:pointer;color:var(--mute)">手动填写热量 / 蛋白质 / 碳水 / 脂肪（食物不在库里时）</summary>
@@ -381,6 +396,12 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       </div>
       <div class="card"><h3>历史复盘</h3><div id="rList"></div></div>
     </div>
+    <div class="sec-t">近 30 天身体状态</div>
+    <div class="card"><div id="rMoodDist"></div></div>
+    <div class="sec-t">体重 × 精力 关联 <span class="note">低精力日标红</span></div>
+    <div class="card"><div class="chart-box tall"><canvas id="cWE"></canvas></div>
+      <div class="legend" id="lgWE"></div>
+      <div id="rWEHint" class="note" style="margin-top:6px"></div></div>
   </section>
 
   <!-- ============ 日记 ============ -->
@@ -389,6 +410,26 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <div class="card"><h3>写下今天 <span class="tag" id="dDateTag"></span></h3>
         <input type="date" class="in" id="dDate">
         <textarea class="in" id="dText" style="margin-top:10px;min-height:170px" placeholder="今天的身体感受、心情、饮食与训练的小记录…"></textarea>
+        <div style="margin-top:14px">
+          <label class="f">今天的状态</label>
+          <div id="dMoodRow" class="mood-row">
+            <button type="button" class="mood-btn" data-mood="charged" title="满电"><img src="icons/mood-charged.png" alt="满电"><span>满电</span></button>
+            <button type="button" class="mood-btn" data-mood="calm" title="平稳"><img src="icons/mood-calm.png" alt="平稳"><span>平稳</span></button>
+            <button type="button" class="mood-btn" data-mood="tired" title="疲惫"><img src="icons/mood-tired.png" alt="疲惫"><span>疲惫</span></button>
+            <button type="button" class="mood-btn" data-mood="sore" title="酸痛"><img src="icons/mood-sore.png" alt="酸痛"><span>酸痛</span></button>
+            <button type="button" class="mood-btn" data-mood="sad" title="沮丧"><img src="icons/mood-sad.png" alt="沮丧"><span>沮丧</span></button>
+            <button type="button" class="mood-btn" data-mood="recover" title="恢复"><img src="icons/mood-recover.png" alt="恢复"><span>恢复</span></button>
+          </div>
+          <div id="dMoodEmpty" class="note" style="margin-top:4px">点击上面的小猫记录今天的状态</div>
+        </div>
+        <div style="margin-top:10px">
+          <label class="f">附加标签（可多选）</label>
+          <div id="dTagsRow" class="chip-row">
+            <button type="button" class="chip" data-tag="酸痛">酸痛</button>
+            <button type="button" class="chip" data-tag="经期">经期</button>
+            <button type="button" class="chip" data-tag="睡眠差">睡眠差</button>
+          </div>
+        </div>
         <div style="margin-top:12px"><button class="btn acc" onclick="saveDiary()">保存日记</button></div>
       </div>
       <div class="card"><h3>日记本</h3><div id="dList"></div></div>
@@ -450,7 +491,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
       </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.6.3（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.7.0（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 <div class="pwa-tip" id="pwaTip">
@@ -1214,7 +1255,8 @@ function defaultUnit(f){if(!f||!f.units)return"克";const units=Object.keys(f.un
 
 /* ================= 存储：本地“资料库”多表 ================= */
 const P="flt_";
-const SCHEMA={body:"身体记录",meals:"饮食记录",plans:"训练计划",logs:"训练日志",habits:"习惯",checks:"习惯打卡",reviews:"每周复盘",diary:"日记",profiles:"个人资料"};
+// === v1.7.0 食物收藏 + 状态标签+小猫+复盘关联图（per-member 隔离，旧数据 0 侵入） ===
+const SCHEMA={body:"身体记录",meals:"饮食记录",favMeals:"收藏餐位",plans:"训练计划",logs:"训练日志",habits:"习惯",checks:"习惯打卡",reviews:"每周复盘",diary:"日记",profiles:"个人资料"};
 const T={};
 for(const k in SCHEMA){try{T[k]=JSON.parse(localStorage.getItem(P+k)||"[]")||[];}catch(e){T[k]=[];}}
 const store={};
@@ -1301,9 +1343,12 @@ function drawChart(cid){const ch=CH[cid],cv=ch.cv,dpr=window.devicePixelRatio||1
   ctx.textAlign="center";
   for(let i=0;i<=5;i++){const u=U[Math.round(i*(U.length-1)/5)];if(u)ctx.fillText(String(u).slice(5),Xof(u),H-6);}
   ch.series.forEach(s=>{if(s.hidden||!s.data.length)return;const yv=s.right?yR:yL;
-    ctx.beginPath();ctx.strokeStyle=s.color;ctx.lineWidth=s.dashed?2:2.4;ctx.setLineDash(s.dashed?[6,5]:[]);ctx.globalAlpha=s.dashed?.85:1;
-    s.data.forEach((d,i)=>{const xx=Xof(d[0]),yy=yv(d[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
-    if(!s.dashed&&!s.noDot){ctx.fillStyle=s.color;s.data.forEach(d=>{ctx.beginPath();ctx.arc(Xof(d[0]),yv(d[1]),2.2,0,7);ctx.fill();});
+    if(!s.noLine){
+      ctx.beginPath();ctx.strokeStyle=s.color;ctx.lineWidth=s.dashed?2:2.4;ctx.setLineDash(s.dashed?[6,5]:[]);ctx.globalAlpha=s.dashed?.85:1;
+      s.data.forEach((d,i)=>{const xx=Xof(d[0]),yy=yv(d[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    }
+    if(s.noLine&&!s.noDot){ctx.fillStyle=s.color;s.data.forEach(d=>{ctx.beginPath();ctx.arc(Xof(d[0]),yv(d[1]),3,0,7);ctx.fill();});}
+    else if(!s.dashed&&!s.noDot){ctx.fillStyle=s.color;s.data.forEach(d=>{ctx.beginPath();ctx.arc(Xof(d[0]),yv(d[1]),2.2,0,7);ctx.fill();});
       const last=s.data[s.data.length-1],lx=Xof(last[0]);ctx.beginPath();ctx.arc(lx,yv(last[1]),4.4,0,7);ctx.fill();ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(lx,yv(last[1]),1.8,0,7);ctx.fill();ctx.fillStyle=s.color;ctx.textAlign="left";ctx.font="bold 10px sans-serif";ctx.fillText(String(last[1]),lx+6,yv(last[1])-5);}
   });
   if(ch.hover!==null){const mx=Math.max(padL,Math.min(W-padR,padL+ch.hover*pw));let best=U[0],bd=1e18;
@@ -1578,6 +1623,59 @@ window.saveMeal=function(){
   });
   saveT("meals");window._mealItems=[];renderFoodItems();toast(`已保存 ${$("mMeal").value}`);rMeals();rOverview();
 };
+/* ====== 食物收藏（per-member） ====== */
+window.addFav=function(){
+  if(!window._mealItems.length){toast("先添加食物再收藏","err");return;}
+  const o=curOwner();const meal=$("mMeal").value;
+  const n=T.favMeals.filter(x=>x.owner===o).length;
+  if(n>=50){toast("收藏已达 50 条上限","err");return;}
+  const items=window._mealItems.map(it=>({name:it.name,amount:it.amount,unit:it.unit,grams:it.grams}));
+  const note=items.slice(0,3).map(x=>`${x.name} ${x.amount}${x.unit}`).join(" + ");
+  const rec={id:uid(),owner:o,meal,items,note,ts:now()};upRec(rec);
+  T.favMeals.push(rec);saveT("favMeals");
+  toast(`已收藏 ${meal}（${items.length} 项）`);
+  const el=$("mFavPanel");if(el&&el.style.display!=="none")renderFavPanel();
+};
+window.delFav=function(id){
+  if(!confirm("删除这条收藏？"))return;
+  tomb("favMeals",id);T.favMeals=T.favMeals.filter(x=>x.id!==id);saveT("favMeals");
+  toast("已删除");renderFavPanel();
+};
+window.useFav=function(id){
+  const f=T.favMeals.find(x=>x.id===id);if(!f)return;
+  if(window._mealItems.length&&!confirm("当前编辑区已有食物，会被覆盖。继续？"))return;
+  $("mMeal").value=f.meal;
+  window._mealItems=f.items.map(it=>{const fd=FOOD_DB.find(x=>x.name===it.name);const c=fd?calcFood(fd,+it.amount,it.unit):null;return c?{name:it.name,amount:+it.amount,unit:it.unit,grams:it.grams,calculated:c}:null;}).filter(Boolean);
+  renderFoodItems();previewFoodCalc();
+  toast(`已载入「${f.meal}」${f.items.length} 项，可微调后保存`);
+  const el=$("mFavPanel");if(el)el.style.display="none";
+};
+window.toggleFavPanel=function(){
+  const el=$("mFavPanel");if(!el)return;
+  if(el.style.display==="none"){el.style.display="";renderFavPanel();}
+  else el.style.display="none";
+};
+window.renderFavPanel=function(){
+  const el=$("mFavPanel");if(!el)return;
+  const o=curOwner();const meal=$("mMeal").value;
+  const all=T.favMeals.filter(x=>x.owner===o).sort((a,b)=>b.ts-a.ts);
+  const list=all.filter(x=>x.meal===meal);
+  const other=all.filter(x=>x.meal!==meal).slice(0,4);
+  if(!all.length){el.innerHTML='<div class="note">还没有收藏。点击「⭐ 收藏这餐」保存常用搭配。</div>';return;}
+  const row=f=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line2)">
+    <div style="flex:1"><b>${esc(f.meal)}</b> · <span class="note">${esc(f.note||"—")}</span>
+    <span class="note" style="margin-left:6px">${esc(dhmsAgo(f.ts))}</span></div>
+    <button class="btn ghost mini" onclick="useFav('${f.id}')">使用</button>
+    <button class="x" onclick="delFav('${f.id}')">✕</button></div>`;
+  let html=`<div class="note" style="margin-bottom:6px">当前餐位「${esc(meal)}」收藏（${list.length}）</div>`;
+  html+=list.length?list.map(row).join(""):'<div class="note" style="margin-bottom:8px">这条餐位还没收藏。</div>';
+  if(other.length){
+    html+=`<div class="note" style="margin:10px 0 6px">其他餐位收藏（最多 4 条）</div>`+other.map(row).join("");
+  }
+  html+=`<div class="note" style="margin-top:8px">共 ${all.length} / 50 条</div>`;
+  el.innerHTML=html;
+};
+function dhmsAgo(ts){const s=Math.floor((now()-ts)/1000);if(s<60)return"刚刚";if(s<3600)return Math.floor(s/60)+" 分钟前";if(s<86400)return Math.floor(s/3600)+" 小时前";return Math.floor(s/86400)+" 天前";}
 window.addMealManual=function(){
   const o=curOwner();const d=$("mDate").value||today();const kcal=parseFloat($("mKcal").value);
   if(!(kcal>0)){toast("请填写热量","err");return;}
@@ -1691,27 +1789,126 @@ window.saveReview=function(){const o=curOwner();const ws=weekStart($("rWeek").va
   rec.done=$("rDone").value.trim();rec.win=$("rWin").value.trim();rec.block=$("rBlock").value.trim();rec.next=$("rNext").value.trim();
   upRec(rec);if(ex){T.reviews[T.reviews.indexOf(ex)]=rec;}else T.reviews.push(rec);
   saveT("reviews");toast("本周复盘已保存");rReview();};
-function rReview(){if(!$("rWeek").value){const w=parseD(today());w.setDate(w.getDate()-7);$("rWeek").value=dstr(w);}
+function rReview(){
+  if(!$("rWeek").value){const w=parseD(today());w.setDate(w.getDate()-7);$("rWeek").value=dstr(w);}
   const o=curOwner();loadReview();
   const list=T.reviews.filter(x=>x.owner===o).sort((a,b)=>b.week.localeCompare(a.week));
   $("rList").innerHTML=list.length?list.slice(0,12).map(r=>`<div style="border-bottom:1px dashed var(--line2);padding:9px 2px">
     <b>${esc(r.week)}</b> <button class="btn ghost mini" style="float:right" onclick="loadRevWeek('${r.week}')">载入</button>
     ${r.done?`<div class="note">✓ ${esc(r.done)}</div>`:""}${r.win?`<div class="note">✦ ${esc(r.win)}</div>`:""}${r.block?`<div class="note">✕ ${esc(r.block)}</div>`:""}</div>`).join(""):'<div class="empty">还没有复盘记录</div>';
+  rMoodDist();rWeightEnergyChart();
 }
 window.loadRevWeek=function(ws){$("rWeek").value=ws;go("review");};
+/* ====== 复盘页：状态分布 + 体重×精力图 ====== */
+const MOOD_LIST=[
+  {key:"charged",label:"满电",img:"icons/mood-charged.png"},
+  {key:"calm",label:"平稳",img:"icons/mood-calm.png"},
+  {key:"tired",label:"疲惫",img:"icons/mood-tired.png"},
+  {key:"sore",label:"酸痛",img:"icons/mood-sore.png"},
+  {key:"sad",label:"沮丧",img:"icons/mood-sad.png"},
+  {key:"recover",label:"恢复",img:"icons/mood-recover.png"}
+];
+const MOOD_HIGH=["charged","calm","recover"];
+const MOOD_LOW=["tired","sore","sad"];
+function rMoodDist(){
+  const el=$("rMoodDist");if(!el)return;
+  const o=curOwner();
+  const days=[];for(let i=29;i>=0;i--)days.push(addDays(today(),-i));
+  const counts={};MOOD_LIST.forEach(m=>counts[m.key]=0);
+  T.diary.filter(x=>x.owner===o&&days.includes(x.date)&&x.mood).forEach(r=>{counts[r.mood]=(counts[r.mood]||0)+1;});
+  const total=Object.values(counts).reduce((s,n)=>s+n,0);
+  if(!total){el.innerHTML='<div class="empty">近 30 天日记还没记录状态</div>';return;}
+  el.innerHTML=`<div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap">
+    ${MOOD_LIST.map(m=>{const n=counts[m.key]||0;const pct=Math.round(n/30*100);
+      return `<div style="flex:1;min-width:80px;text-align:center">
+        <div style="height:90px;display:flex;align-items:flex-end;justify-content:center"><div style="width:42px;background:${MOOD_HIGH.includes(m.key)?"var(--forest)":"var(--terra)"};height:${pct*2.5||2}px;border-radius:6px 6px 0 0;opacity:${n?1:.25}"></div></div>
+        <img src="${m.img}" alt="${m.label}" style="width:34px;height:34px;margin:6px 0 4px">
+        <div><b>${n}</b> 天 · ${pct}%</div>
+        <div class="note" style="font-size:11px">${m.label}</div>
+      </div>`;}).join("")}
+  </div>
+  <div class="note" style="margin-top:10px">绿色 = 高精力（满电/平稳/恢复），橘色 = 低精力（疲惫/酸痛/沮丧）。共记录 ${total} 天 · 占比 = ${Math.round(total/30*100)}%。</div>`;
+}
+function rWeightEnergyChart(){
+  const hint=$("rWEHint");const ser=[];
+  const o=curOwner();
+  const days=[];for(let i=29;i>=0;i--)days.push(addDays(today(),-i));
+  const bodyMap={};owned("body").forEach(b=>{bodyMap[b.date]=b.kg;});
+  const moodMap={};T.diary.filter(x=>x.owner===o&&days.includes(x.date)).forEach(r=>{moodMap[r.date]=r.mood;});
+  const wData=days.filter(d=>bodyMap[d]!=null).map(d=>({x:d,y:round(bodyMap[d],1),mood:moodMap[d]}));
+  const eData=days.filter(d=>moodMap[d]).map(d=>{const idx=MOOD_LIST.findIndex(m=>m.key===moodMap[d]);return {x:d,y:idx>=0?idx+1:null,key:moodMap[d]};});
+  if(wData.length<2){hint.textContent="体重记录少于 2 天，暂不画图。继续记录即可看到趋势。";cfgSeries("cWE",[],{});drawLegend("cWE","lgWE");return;}
+  if(eData.length<1){hint.textContent="日记还没记录状态，精力散点暂不可用。";}
+  else hint.textContent=`体重 ${wData.length} 天 + 日记状态 ${eData.length} 天 · 鼠标悬停看详情（红色点 = 低精力）`;
+  const terra=getComputedStyle(document.documentElement).getPropertyValue("--terra").trim();
+  const forest=getComputedStyle(document.documentElement).getPropertyValue("--forest").trim();
+  const bad=getComputedStyle(document.documentElement).getPropertyValue("--bad").trim();
+  ser.push({label:"体重 kg（左轴）",color:terra,lineWidth:2,data:wData.map(x=>[x.x,x.y])});
+  ser.push({label:"精力 高（满电/平稳/恢复）",color:forest,right:true,noDot:true,noLine:true,data:eData.filter(d=>MOOD_HIGH.includes(d.key)).map(d=>[d.x,d.y])});
+  ser.push({label:"精力 低（疲惫/酸痛/沮丧）",color:bad,right:true,noDot:true,noLine:true,data:eData.filter(d=>MOOD_LOW.includes(d.key)).map(d=>[d.x,d.y])});
+  cfgSeries("cWE",ser,{});
+  drawLegend("cWE","lgWE");bindHover("cWE");
+}
 
 /* ================= 日记 ================= */
-window.saveDiary=function(){const o=curOwner();const d=$("dDate").value||today();const txt=$("dText").value.trim();if(!txt){toast("写点什么吧","err");return;}
-  const ex=T.diary.find(x=>x.owner===o&&x.date===d);const rec=ex||{id:uid(),owner:o,date:d,createdAt:now()};rec.text=txt;upRec(rec);
+window.saveDiary=function(){
+  const o=curOwner();const d=$("dDate").value||today();
+  const txt=$("dText").value.trim();
+  const moodSel=$("dMoodRow").querySelector(".mood-btn.on");
+  const mood=moodSel?moodSel.dataset.mood:null;
+  const tagBtns=$("dTagsRow").querySelectorAll(".chip.on");
+  const tags=Array.from(tagBtns).map(b=>b.dataset.tag);
+  if(!txt&&!mood&&!tags.length){toast("写点或选个状态吧","err");return;}
+  const ex=T.diary.find(x=>x.owner===o&&x.date===d);
+  const rec=ex||{id:uid(),owner:o,date:d,createdAt:now()};
+  if(txt)rec.text=txt;
+  if(mood)rec.mood=mood;
+  rec.tags=tags;
+  upRec(rec);
   if(ex){T.diary[T.diary.indexOf(ex)]=rec;}else T.diary.push(rec);
-  saveT("diary");$("dText").value="";toast("日记已保存");rDiary();};
-window.loadDiary=function(d){const o=curOwner();$("dDate").value=d;const r=T.diary.find(x=>x.owner===o&&x.date===d);$("dText").value=r?r.text:"";go("diary");};
-function rDiary(){if(!$("dDate").value)$("dDate").value=today();
+  saveT("diary");
+  $("dText").value="";$("dMoodRow").querySelectorAll(".mood-btn.on").forEach(b=>b.classList.remove("on"));$("dTagsRow").querySelectorAll(".chip.on").forEach(b=>b.classList.remove("on"));$("dMoodEmpty").style.display="";
+  toast("日记已保存");rDiary();};
+window.loadDiary=function(d){
+  const o=curOwner();$("dDate").value=d;
+  const r=T.diary.find(x=>x.owner===o&&x.date===d);
+  $("dText").value=r&&r.text?r.text:"";
+  $("dMoodRow").querySelectorAll(".mood-btn").forEach(b=>b.classList.toggle("on",r&&r.mood===b.dataset.mood));
+  $("dMoodEmpty").style.display=(r&&r.mood)?"none":"";
+  $("dTagsRow").querySelectorAll(".chip").forEach(b=>b.classList.toggle("on",!!(r&&r.tags&&r.tags.includes(b.dataset.tag))));
+  go("diary");
+};
+function rDiary(){
+  if(!$("dDate").value)$("dDate").value=today();
   const o=curOwner();const list=T.diary.filter(x=>x.owner===o).sort((a,b)=>b.date.localeCompare(a.date));
   $("dDateTag").textContent=$("dDate").value;
-  $("dList").innerHTML=list.length?list.map(r=>`<div style="border-bottom:1px dashed var(--line2);padding:10px 2px"><b>${esc(r.date)}</b> <button class="btn ghost mini" style="float:right" onclick="loadDiary('${r.date}')">编辑</button>
-    <div style="white-space:pre-wrap;color:#4a534c;font-size:13.5px;margin-top:2px">${esc(r.text)}</div></div>`).join(""):'<div class="empty">还没有日记</div>';
+  $("dList").innerHTML=list.length?list.map(r=>{
+    const moodHtml=r.mood?`<img class="mood-thumb" src="icons/mood-${esc(r.mood)}.png" alt="${esc(r.mood)}" title="${esc(r.mood)}">`:"";
+    const tagsHtml=(r.tags && r.tags.length)?`<div style="margin-top:4px">${r.tags.map(t=>`<span class="pill y" style="margin-right:4px">${esc(t)}</span>`).join("")}</div>`:"";
+    return `<div style="border-bottom:1px dashed var(--line2);padding:10px 2px;display:flex;gap:10px">
+      <div style="flex:1">
+        <b>${esc(r.date)}</b> <button class="btn ghost mini" style="float:right" onclick="loadDiary('${r.date}')">编辑</button>
+        ${tagsHtml}
+        <div style="white-space:pre-wrap;color:#4a534c;font-size:13.5px;margin-top:2px">${esc(r.text||"")}</div>
+      </div>
+      ${moodHtml?`<div style="flex:none">${moodHtml}</div>`:""}
+    </div>`;}).join(""):'<div class="empty">还没有日记</div>';
+  bindMoodChips();
 }
+window.bindMoodChips=function(){
+  document.querySelectorAll("#dMoodRow .mood-btn").forEach(b=>{
+    b.onclick=()=>{
+      const row=$("dMoodRow");const wasOn=b.classList.contains("on");
+      row.querySelectorAll(".mood-btn.on").forEach(x=>x.classList.remove("on"));
+      if(!wasOn){b.classList.add("on");$("dMoodEmpty").style.display="none";}
+      else $("dMoodEmpty").style.display="";
+    };
+  });
+  document.querySelectorAll("#dTagsRow .chip").forEach(b=>{
+    b.onclick=()=>{b.classList.toggle("on");};
+  });
+};
+window.bindMoodChips();
 
 /* ================= 设置 ================= */
 window.togAuto=function(){ss({ghAuto:(gs().ghAuto===false)?true:false});applySettings();};
