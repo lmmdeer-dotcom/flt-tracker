@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="轻盈计划">
-<link rel="manifest" href="./manifest.json?v=1.5">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.5">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.5">
+<link rel="manifest" href="./manifest.json?v=1.5.1">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.5.1">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.5.1">
 <title>轻盈计划 · 减脂健身追踪台</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -340,7 +340,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <div class="card"><h3>自由记录一次训练</h3>
         <div class="row"><div class="cell"><label class="f">日期</label><input class="in" type="date" id="lDate"></div>
         <div class="cell"><label class="f">内容</label><input class="in" id="lName" placeholder="如 慢跑 5km"></div>
-        <div class="cell"><label class="f">类型</label><select class="in" id="lKind"><option value="ST">ST 力量</option><option value="CV">CV 有氧</option><option value="YG">YG 瑜伽</option><option value="PL">PL 普拉提</option><option value="FX">FX 拉伸</option><option value="HI">HI HIIT</option><option value="OT">OT 其他</option></select></div></div>
+        <div class="cell"><label class="f">类型</label><select class="in" id="lKind"><option>力量</option><option>有氧</option><option>瑜伽</option><option>普拉提</option><option>拉伸</option><option>HIIT</option><option>其他</option></select></div></div>
         <div style="margin-top:12px"><button class="btn acc" onclick="addLog()">记录训练</button>
           <button class="btn danger mini" onclick="clearTab('logs')">清空日志</button></div>
       </div>
@@ -450,7 +450,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
       </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.5（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.5.1（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 <div class="pwa-tip" id="pwaTip">
@@ -482,12 +482,12 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const jstr=o=>JSON.stringify(o);
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const shade=(hex,p)=>{hex=hex.replace("#","");if(hex.length===3)hex=hex.split("").map(c=>c+c).join("");const n=parseInt(hex,16);const r=(n>>16)&255,g=(n>>8)&255,b=n&255;const m=v=>Math.round(clamp(p<0?v*(1+p):v+(255-v)*p,0,255));return `#${((1<<24)+(m(r)<<16)+(m(g)<<8)+m(b)).toString(16).slice(1)}`;}
-const KIND_MAP={'力量':'ST','有氧':'CV','瑜伽':'YG','普拉提':'PL','拉伸':'FX','HIIT':'HI','其他':'OT'};
-const KIND_REV={'ST':'力量','CV':'有氧','YG':'瑜伽','PL':'普拉提','FX':'拉伸','HI':'HIIT','OT':'其他'};
-const KIND_OPTS=['ST','CV','YG','PL','FX','HI','OT'];
-const KIND_COLOR={'ST':'y','CV':'t','YG':'g','PL':'g','FX':'g','HI':'t','OT':'y'};
-function normKind(k){return KIND_MAP[k]||k;}
-function labelKind(k){return KIND_REV[k]||k;}
+const KIND_OPTS=['力量','有氧','瑜伽','普拉提','拉伸','HIIT','其他'];
+const KIND_COLOR={'力量':'y','有氧':'t','瑜伽':'g','普拉提':'g','拉伸':'g','HIIT':'t','其他':'y'};
+const KIND_LEGACY={'ST':'力量','CV':'有氧','YG':'瑜伽','PL':'普拉提','FX':'拉伸','HI':'HIIT','OT':'其他'};
+function normKind(k){return KIND_LEGACY[k]||(KIND_OPTS.indexOf(k)>=0?k:'其他');}
+const WD_EN=['MON','TUE','WED','THU','FRI','SAT','SUN']; /* 周一起始（周一=0），用于训练计划行 */
+const WD0=['SUN','MON','TUE','WED','THU','FRI','SAT'];   /* 按 Date.getDay() 索引 */
 function toast(msg,type){const t=document.createElement("div");t.className="toast"+(type?" t-"+type:"");t.textContent=msg;$("toasts").appendChild(t);setTimeout(()=>{t.style.opacity=0;t.style.transition=".4s";setTimeout(()=>t.remove(),400);},2600);}
 function ask(msg,ph,btn){return new Promise(res=>{const m=$("modalMask"),b=$("modalBox");b.innerHTML=`<h2>${esc(msg)}</h2><div style="margin:12px 0"><input class="in" id="askI" placeholder="${esc(ph||"")}"></div>
 <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn ghost" onclick="closeAsk()">取消</button><button class="btn" onclick="confirmAsk('${btn||"确定"}')">${btn||"确定"}</button></div>`;
@@ -1137,8 +1137,8 @@ function rHeader(){
   const names=ownerNames();if(!names.length){/* 等待 onboarding */return;}
   let o=curOwner();if(!o||!names.includes(o)){o=names[0];ss({owner:o});}
   const p=profile(o),lb=latestBody(o);
-  const wd=["日","一","二","三","四","五","六"][new Date().getDay()];
-  let sub=`今天是 ${today()} · 星期${wd} · 开启第 ${Math.max(1,Math.floor((now()- (p&&p.startAt?p.startAt:now()))/864e5)+1)} 天`;
+  const wd=WD0[new Date().getDay()];
+  let sub=`今天是 ${today()} · ${wd} · 开启第 ${Math.max(1,Math.floor((now()- (p&&p.startAt?p.startAt:now()))/864e5)+1)} 天`;
   if(p&&lb)sub+=` · 当前 ${lb.kg} kg（${p.goalKg?"目标 "+p.goalKg+" kg · 已减 "+round(p.startKg-lb.kg,1)+" kg":"目标未设"}）`;
   $("greetSub").innerHTML=sub;
   const hint=$("ownerHint");hint.innerHTML=p?`<span class="pill g">${esc(p.sex||"")} · ${esc(String(p.age||""))}岁 · ${esc(String(p.height||""))}cm</span>`:"";
@@ -1206,7 +1206,7 @@ function seedMeals(){
   saveT("meals");
 }
 function seedPlans(){
-  const o=curOwner();const defs=[["周一","力量 · 上肢","ST"],["周二","有氧 · 快走 40min","CV"],["周三","瑜伽 / 呼吸","YG"],["周四","力量 · 下肢","ST"],["周五","HIIT 20min","HI"],["周六","户外骑行 60min","CV"],["周日","拉伸 · 放松","FX"]];
+  const o=curOwner();const defs=[["周一","力量 · 上肢","力量"],["周二","有氧 · 快走 40min","有氧"],["周三","瑜伽 / 呼吸","瑜伽"],["周四","力量 · 下肢","力量"],["周五","HIIT 20min","HIIT"],["周六","户外骑行 60min","有氧"],["周日","拉伸 · 放松","拉伸"]];
   T.plans=T.plans.filter(x=>x.owner!==o);defs.forEach((dd,i)=>{T.plans.push({id:uid(),owner:o,dow:i,name:dd[1],kind:dd[2],updatedAt:now(),createdAt:now()});});saveT("plans");
 }
 function seedHabits(){
@@ -1412,9 +1412,9 @@ function rMeals(){
 /* ================= 训练 ================= */
 let trainWeek=weekStart(today());
 function weekShift(n){const d=parseD(trainWeek);d.setDate(d.getDate()+n*7);trainWeek=dstr(d);rTrain();}
-function templateRows(){const rows=[];for(let i=0;i<7;i++){const found=T.plans.find(x=>x.owner===curOwner()&&x.dow===i);rows[i]=found?{...found,kind:normKind(found.kind)}:{dow:i,name:"",kind:"ST"};}return rows;}
-function rTemplate(){const o=curOwner();const wd=["一","二","三","四","五","六","日"];
-  $("trTemplate").innerHTML=wd.map((w,i)=>{const t=templateRows()[i];return `<div class="tr-row"><span class="pill g tr-day">周${w}</span>
+function templateRows(){const rows=[];for(let i=0;i<7;i++){const found=T.plans.find(x=>x.owner===curOwner()&&x.dow===i);rows[i]=found?{...found,kind:normKind(found.kind)}:{dow:i,name:"",kind:"力量"};}return rows;}
+function rTemplate(){const o=curOwner();const wd=WD_EN;
+  $("trTemplate").innerHTML=wd.map((w,i)=>{const t=templateRows()[i];return `<div class="tr-row"><span class="pill g tr-day">${w}</span>
   <select class="in tr-kind" id="tk${i}">${KIND_OPTS.map(k=>`<option value="${k}"${t.kind===k?' selected':''}>${k}</option>`).join('')}</select>
   <input class="in tr-input" id="tp${i}" value="${esc(t.name||'')}" placeholder="休息 / 训练内容"></div>`;}).join('');
 }
@@ -1423,7 +1423,7 @@ window.saveTemplate=function(){const o=curOwner();for(let i=0;i<7;i++){const nam
     if(ex){ex.name=name;ex.kind=kind;upRec(ex);}else T.plans.push({id:uid(),owner:o,dow:i,name,kind,createdAt:now(),updatedAt:now()});}
   saveT("plans");toast("周训练模板已保存");rTrain();};
 window.clearTemplate=function(){const o=curOwner();tomb("plans",T.plans.filter(x=>x.owner===o).map(x=>x.id));T.plans=T.plans.filter(x=>x.owner!==o);saveT("plans");toast("模板已清空");rTrain();};
-function rPlanList(){const o=curOwner();const wd=["周一","周二","周三","周四","周五","周六","周日"];
+function rPlanList(){const o=curOwner();const wd=WD_EN;
   const items=T.plans.filter(x=>x.owner===o).sort((a,b)=>a.dow-b.dow);
   if(!items.length){$("trPlanList").innerHTML='<div class="empty">左侧先设置每周训练模板</div>';$("trProgress").innerHTML="";}
   else{
@@ -1442,7 +1442,7 @@ function rPlanList(){const o=curOwner();const wd=["周一","周二","周三","�
 window.toggleLog=function(date,plId){
   const o=curOwner();const ex=owned("logs").find(x=>x.date===date);
   if(ex){tomb("logs",ex.id);T.logs=T.logs.filter(x=>x.id!==ex.id);}
-  else{const pl=T.plans.find(x=>x.id===plId);const rec={id:uid(),owner:o,date,name:pl?pl.name:"自由训练",kind:pl?normKind(pl.kind):"OT",note:"计划打卡",createdAt:now()};upRec(rec);T.logs.push(rec);}
+  else{const pl=T.plans.find(x=>x.id===plId);const rec={id:uid(),owner:o,date,name:pl?pl.name:"自由训练",kind:pl?normKind(pl.kind):"其他",note:"计划打卡",createdAt:now()};upRec(rec);T.logs.push(rec);}
   saveT("logs");rTrain();rOverview();
 };
 window.addLog=function(){const o=curOwner();const d=$("lDate").value||today();const n=$("lName").value.trim();if(!n){toast("填写训练内容","err");return;}
@@ -1464,8 +1464,8 @@ window.togCheck=function(hid){const o=curOwner();const d=$("hDate").value||today
 function rHabits(){
   const o=curOwner();const d=$("hDate").value||today();$("hDate").value=d;
   const hs=T.habits.filter(x=>x.owner===o);
-  $("hDateTag").textContent=d;const dow=["日","一","二","三","四","五","六"][parseD(d).getDay()];
-  $("hDateNote").textContent="星期"+dow+(d===today()?"（今天）":parseD(d)>parseD(today())?"（未来）":"");
+  $("hDateTag").textContent=d;const dow=WD0[parseD(d).getDay()];
+  $("hDateNote").textContent=dow+(d===today()?"（今天）":parseD(d)>parseD(today())?"（未来）":"");
   const hl=$("hList");
   if(!hs.length)hl.innerHTML='<div class="empty">先添加一个习惯，比如「步数 8000」</div>';
   else{const done=hs.filter(h=>T.checks.some(x=>x.owner===o&&x.habitId===h.id&&x.date===d&&x.done)).length;
