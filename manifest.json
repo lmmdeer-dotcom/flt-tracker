@@ -1,8 +1,8 @@
 {
   "id": "flt-tracker",
-  "name": "轻盈计划 · 减脂健身追踪台",
-  "short_name": "轻盈计划",
-  "description": "减脂健身追踪：体重体脂记录、趋势分析、训练打卡、热量计算",
+  "name": "Tadashi健身加油！",
+  "short_name": "Tadashi健身加油",
+  "description": "Tadashi健身加油：体重体脂记录、趋势分析、训练打卡、热量计算",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
