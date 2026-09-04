@@ -1,4 +1,5 @@
 {
+  "id": "flt-tracker",
   "name": "轻盈计划 · 减脂健身追踪台",
   "short_name": "轻盈计划",
   "description": "减脂健身追踪：体重体脂记录、趋势分析、训练打卡、热量计算",
@@ -8,6 +9,7 @@
   "orientation": "portrait",
   "background_color": "#F6F1E7",
   "theme_color": "#315f46",
+  "categories": ["health", "fitness", "lifestyle"],
   "icons": [
     { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }

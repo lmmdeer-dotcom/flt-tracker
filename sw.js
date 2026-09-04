@@ -1,5 +1,5 @@
-const CACHE="flt-v1.4";
-const PRECACHE=["./","./index.html","./icons/icon-192.png","./icons/icon-512.png"];
+const CACHE="flt-v1.5";
+const PRECACHE=["./","./index.html","./manifest.json","./icons/icon-192.png","./icons/icon-512.png"];
 
 self.addEventListener("install",e=>{
   self.skipWaiting();
