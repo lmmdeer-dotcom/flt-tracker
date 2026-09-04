@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="轻盈计划">
-<link rel="manifest" href="./manifest.json?v=1.3.1">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.3.1">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.3.1">
+<link rel="manifest" href="./manifest.json?v=1.4">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.4">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.4">
 <title>轻盈计划 · 减脂健身追踪台</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -393,6 +393,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <p class="note">颜色实时生效并保存在本机；字号、间距与布局不受影响。</p>
     </div>
 
+    <div id="adminOnly" style="display:none">
     <div class="sec-t">云端同步 <span class="note">自动备份到云端 · 换设备不丢数据</span></div>
     <div class="card">
       <div id="ghState"></div>
@@ -415,6 +416,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <div id="ghLog" class="note" style="margin-top:10px;white-space:pre-wrap;font-size:12px;background:var(--paper2);border:1px dashed var(--line);border-radius:10px;padding:8px 10px;min-height:20px"></div>
       </details>
     </div>
+    </div>
 
     <div class="sec-t">数据与备份</div>
     <div class="card">
@@ -423,12 +425,16 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <div class="set-row"><div class="l"><b>导入备份 / 合并</b><span>选择 JSON 备份，按更新时间合并（不会丢数据）</span></div>
         <button class="btn ghost" onclick="document.getElementById('impFile').click()">导入</button>
         <input type="file" id="impFile" accept="application/json,.json" style="display:none" onchange="importAll(event)"></div>
+      <div class="set-row"><div class="l"><b>仅清空本人数据</b><span>删除本人在本机的所有记录；档案保留；云端档案保留</span></div>
+        <button class="btn danger" onclick="wipeSelf()">清空本人数据</button></div>
+      <div id="adminOnlyDanger" style="display:none">
       <div class="set-row"><div class="l"><b>仅保留当前成员数据</b><span>删除本机其他成员的记录，保留当前成员（切换成员后可用）</span></div>
         <button class="btn danger" onclick="keepOnlyCurrent()">清理他人数据</button></div>
       <div class="set-row"><div class="l"><b>清空全部数据</b><span>删除本机全部表数据与个人资料；云端数据保留，重新同步会拉回</span></div>
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
+      </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.3.1（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>轻盈计划 · 减脂健身追踪台 v1.4（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 
@@ -1011,6 +1017,7 @@ function applySettings(){const s=gs();
 }
 /* ================= 计算 ================= */
 function profile(o){const p=owned("profiles").find(x=>x.owner===o)||T.profiles.find(x=>x.owner===o)||null;return p;}
+function isAdmin(o){const p=profile(o);return !!(p&&p.role==='admin');}
 function latestBody(o){const arr=owned("body").slice().sort((a,b)=>a.date<b.date?-1:1);return arr[arr.length-1]||null;}
 function firstBody(o){const arr=owned("body").slice().sort((a,b)=>a.date<b.date?-1:1);return arr[0]||null;}
 function calc(p,kg){
@@ -1111,7 +1118,7 @@ function rHeader(){
   const hint=$("ownerHint");hint.innerHTML=p?`<span class="pill g">${esc(p.sex||"")} · ${esc(String(p.age||""))}岁 · ${esc(String(p.height||""))}cm</span>`:"";
 }
 function openOnboarding(force){const o=curOwner();const p=force?null:profile(o);const m=$("modalMask"),b=$("modalBox");
-  b.innerHTML=`<h2>${force?"添加新成员":"建立你的档案"}</h2><p class="note">用于 Mifflin-St Jeor 代谢估算与目标进度</p>
+  b.innerHTML=`<h2>${force?"添加新成员":"建立你的档案"}</h2>
   <div class="row"><div class="cell"><label class="f">姓名 *</label><input class="in" id="obName" value="${esc(p?p.name:o)}"></div>
   <div class="cell"><label class="f">性别</label><select class="in" id="obSex"><option ${p&&p.sex==="女"?"selected":""}>女</option><option ${p&&p.sex==="男"?"selected":""}>男</option></select></div>
   <div class="cell"><label class="f">年龄</label><input class="in num-inline" type="number" id="obAge" value="${p?p.age:30}"></div></div>
@@ -1132,7 +1139,9 @@ window.saveProfile=function(){
   if(!name){toast("请填写姓名","err");return;}if(!(start>0)){toast("请填写起始体重","err");return;}if(!(goal>0)){toast("请填写目标体重","err");return;}
   const prev=profile(name);
   let rec=prev||{id:uid(),owner:name,createdAt:now()};
-  Object.assign(rec,{name,sex:$("obSex").value,age:+$("obAge").value,height:+$("obH").value,startKg:start,goalKg:goal,activity:+$("obAct").value,deficit:+$("obDef").value,startAt:prev?prev.startAt:now()});
+  // 自动分配角色：第一位建档者为管理员，后续为普通成员（管理员可在设置中提升）
+  const role=prev?(prev.role||'member'):(T.profiles.length===0?'admin':'member');
+  Object.assign(rec,{name,sex:$("obSex").value,age:+$("obAge").value,height:+$("obH").value,startKg:start,goalKg:goal,activity:+$("obAct").value,deficit:+$("obDef").value,role,startAt:prev?prev.startAt:now()});
   upRec(rec);
   const i=T.profiles.findIndex(x=>x.id===rec.id);if(i>=0)T.profiles[i]=rec;else T.profiles.push(rec);
   saveT("profiles");ss({owner:name});$("modalMask").classList.remove("on");
@@ -1479,13 +1488,60 @@ function rDiary(){if(!$("dDate").value)$("dDate").value=today();
 window.togAuto=function(){ss({ghAuto:(gs().ghAuto===false)?true:false});applySettings();};
 window.togPushAuto=function(){ss({ghPushAuto:(gs().ghPushAuto===false)?true:false});applySettings();};
 function rSettings(){const o=curOwner(),p=profile(o);
-  $("sProfile").innerHTML=p?`<div class="set-row"><div class="l"><b>${esc(p.name)}</b><span>${p.sex} · ${p.age}岁 · ${p.height}cm · 活动 ${["","久坐","轻度","中度","高度","极高"][[1.2,1.375,1.55,1.725,1.9].indexOf(+p.activity)+1]||"中度"} · 缺口 ${p.deficit} kcal</span></div>
+  const admin=isAdmin(o);
+  $("sProfile").innerHTML=p?`<div class="set-row"><div class="l"><b>${esc(p.name)}</b><span><span class="pill ${admin?'g':'y'}">${admin?'管理员':'成员'}</span> ${p.sex} · ${p.age}岁 · ${p.height}cm · 活动 ${["","久坐","轻度","中度","高度","极高"][[1.2,1.375,1.55,1.725,1.9].indexOf(+p.activity)+1]||"中度"} · 缺口 ${p.deficit} kcal</span></div>
     <button class="btn ghost mini" onclick="openOnboarding(false)">编辑档案</button></div>
-    <div class="set-row"><div class="l"><b>新增团队成员</b><span>为同事建立独立档案，数据按成员分开</span></div>
-    <button class="btn acc mini" onclick="addMemberBtn()">＋ 添加成员</button></div>`
+    ${admin?`<div class="set-row"><div class="l"><b>新增团队成员</b><span>为同事建立独立档案，数据按成员分开</span></div>
+    <button class="btn acc mini" onclick="addMemberBtn()">＋ 添加成员</button></div>`:''}
+    ${admin?`<div class="set-row"><div class="l"><b>成员角色管理</b><span>提升其他成员为管理员，使其也能看到完整设置与云端面板</span></div>
+    <button class="btn ghost mini" onclick="openRoleMgr()">管理成员角色</button></div>`:''}`
     :`<div class="empty">还没有个人档案。<button class="btn" onclick="openOnboarding(false)">立即建立</button></div>`;
-  cloudRender();
+  const ao=$("adminOnly");if(ao)ao.style.display=admin?'':'none';
+  const ad=$("adminOnlyDanger");if(ad)ad.style.display=admin?'':'none';
+  if(admin)cloudRender();
 }
+window.openRoleMgr=function(){
+  const list=T.profiles.filter(x=>x.owner);
+  const m=$("modalMask"),b=$("modalBox");
+  b.innerHTML=`<h2>成员角色管理</h2>
+    <p class="note">把成员提升为「管理员」后，他也能看到完整设置与云端面板</p>
+    <div style="margin-top:14px">
+    ${list.length?list.map(x=>{
+      const isMe=x.owner===curOwner();
+      const isAdminRole=x.role==='admin';
+      return `<div class="set-row"><div class="l"><b>${esc(x.name)}</b><span><span class="pill ${isAdminRole?'g':'y'}">${isAdminRole?'管理员':'成员'}</span>${isMe?'（你）':''}</span></div>
+      <button class="btn ghost mini" onclick="toggleRole('${esc(x.owner)}')">${isAdminRole?'降为成员':'提升为管理员'}</button></div>`;
+    }).join(""):'<div class="empty">还没有成员</div>'}
+    </div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px"><button class="btn ghost" onclick="closeOnb()">关闭</button></div>`;
+  m.classList.add("on");
+};
+window.toggleRole=function(name){
+  const x=T.profiles.find(p=>p.owner===name);if(!x)return;
+  if(x.role==='admin'){
+    const admins=T.profiles.filter(p=>p.role==='admin');
+    if(admins.length<=1){toast("至少保留一位管理员","err");return;}
+  }
+  x.role=x.role==='admin'?'member':'admin';
+  upRec(x);saveT("profiles");
+  openRoleMgr();rSettings();rHeader();
+  toast(`${name} 已${x.role==='admin'?'提升为管理员':'降为成员'}`);
+};
+window.wipeSelf=async function(){
+  const owner=curOwner();if(!owner)return;
+  const r=await ask(`只清空「${owner}」在本机的所有记录？\n（档案保留；云端档案保留；如需彻底删除请联系管理员）`,`输入 清空 以确认`,`清空`);
+  if(!r||r.v!=="清空")return toast("已取消");
+  Object.keys(SCHEMA).forEach(k=>{
+    if(k==="profiles")return;
+    const ids=T[k].filter(x=>x.owner===owner).map(x=>x.id);
+    if(ids.length)tomb(k,ids);
+    T[k]=T[k].filter(x=>x.owner!==owner);
+    saveT(k);
+  });
+  toast(`已清空「${owner}」的本地数据`);
+  RENDERS[cur]&&RENDERS[cur]();
+  rOverview&&rOverview();
+};
 window.cloudRender=function(){const c=cloudCfg();
   const el=$("ghState");if(!el)return;
   el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -1639,10 +1695,11 @@ window.importAll=function(ev){const f=ev.target.files[0];if(!f)return;const rd=n
     if(d.settings){const s=gs();ss({themeMain:d.settings.themeMain||s.themeMain,themeAcc:d.settings.themeAcc||s.themeAcc});}
     toast("导入合并完成");memberOptions();rHeader();showView("overview");}catch(e){toast("文件格式不正确","err");}};
   rd.readAsText(f);ev.target.value="";};
-window.wipeAll=async function(){const r=await ask("清空全部本地数据？（仅本机；云端数据保留，下次同步可能拉回）","输入 清空全部 以确认","清空全部");if(!r||r.v!=="清空全部")return toast("已取消");
+window.wipeAll=async function(){if(!isAdmin(curOwner())){toast("需要管理员权限","err");return;}const r=await ask("清空全部本地数据？（仅本机；云端数据保留，下次同步可能拉回）","输入 清空全部 以确认","清空全部");if(!r||r.v!=="清空全部")return toast("已取消");
   Object.keys(SCHEMA).forEach(k=>{T[k]=[];localStorage.removeItem(P+k);});
   localStorage.removeItem(P+"settings");localStorage.removeItem(P+"tombs");toast("全部数据已清空");location.reload();};
 window.keepOnlyCurrent=async function(){
+  if(!isAdmin(curOwner())){toast("需要管理员权限","err");return;}
   const owner=curOwner();if(!owner){toast("请先选择或建立一个成员","err");return;}
   const r=await ask(`只保留「${owner}」的数据，删除本机其他成员的记录？`,`输入 保留 以确认`,`保留`);
   if(!r||r.v!=="保留")return toast("已取消");
