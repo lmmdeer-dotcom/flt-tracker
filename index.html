@@ -450,7 +450,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
       </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.6（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.6.1（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 <div class="pwa-tip" id="pwaTip">
@@ -1064,6 +1064,49 @@ const FOOD_DB=[
 {name:"凉拌番茄",kcal:20,p:0.8,c:4.0,f:0.2,units:{个:200}},
 {name:"凉拌木耳",kcal:28,p:1.5,c:6.0,f:0.2,units:{份:100}},
 {name:"凉拌海带",kcal:15,p:1.0,c:3.0,f:0.2,units:{份:100}},
+
+// === v1.6.1 消费场景包（高频外卖/奶茶/街边小吃，按典型份量独立入库）===
+// 奶茶/咖啡 续（流行款 + 港式 + 连锁）
+{name:"港式丝袜奶茶",kcal:220,p:2.5,c:28.0,f:11.0,units:{杯:350}},
+{name:"芋泥奶茶",kcal:380,p:3.0,c:50.0,f:18.0,units:{杯:500}},
+{name:"烤奶茶",kcal:320,p:2.5,c:42.0,f:15.0,units:{杯:500}},
+{name:"生椰拿铁",kcal:220,p:3.0,c:20.0,f:13.0,units:{杯:500}},
+{name:"燕麦拿铁",kcal:180,p:3.5,c:18.0,f:10.0,units:{杯:500}},
+{name:"摩卡咖啡",kcal:200,p:3.0,c:22.0,f:11.0,units:{杯:350}},
+{name:"蜂蜜柚子茶",kcal:130,p:0.5,c:32.0,f:0.0,units:{杯:350}},
+{name:"柠檬茶",kcal:180,p:0.5,c:44.0,f:0.0,units:{杯:500}},
+{name:"蜜雪柠檬水",kcal:130,p:0.2,c:32.0,f:0.0,units:{杯:500}},
+{name:"喜茶多肉葡萄",kcal:280,p:1.0,c:55.0,f:5.0,units:{杯:500}},
+
+// 外卖常见菜（按 1 份典型份量）
+{name:"干煸豆角",kcal:240,p:8.0,c:18.0,f:15.0,units:{份:200}},
+{name:"蚝油生菜",kcal:110,p:2.0,c:8.0,f:8.0,units:{份:200}},
+{name:"黄焖鸡",kcal:380,p:25.0,c:8.0,f:28.0,units:{份:300}},
+{name:"黄焖鸡米饭",kcal:700,p:30.0,c:80.0,f:30.0,units:{份:450}},
+{name:"重庆小面",kcal:480,p:14.0,c:70.0,f:16.0,units:{碗:400}},
+{name:"螺蛳粉",kcal:580,p:13.0,c:85.0,f:20.0,units:{份:500}},
+{name:"沙县拌面",kcal:480,p:11.0,c:65.0,f:18.0,units:{份:300}},
+{name:"麻辣香锅",kcal:600,p:20.0,c:35.0,f:42.0,units:{份:500}},
+{name:"麻辣烫",kcal:450,p:15.0,c:40.0,f:25.0,units:{份:500}},
+{name:"酸菜鱼",kcal:400,p:28.0,c:8.0,f:28.0,units:{份:500}},
+{name:"水煮鱼",kcal:380,p:30.0,c:6.0,f:25.0,units:{份:500}},
+{name:"酸辣粉",kcal:350,p:6.0,c:65.0,f:8.0,units:{份:400}},
+{name:"鸡排饭",kcal:720,p:28.0,c:90.0,f:25.0,units:{份:450}},
+{name:"锅包肉",kcal:480,p:18.0,c:35.0,f:30.0,units:{份:250}},
+{name:"地三鲜",kcal:320,p:4.0,c:25.0,f:22.0,units:{份:250}},
+{name:"轻食沙拉",kcal:180,p:8.0,c:18.0,f:9.0,units:{份:300}},
+
+// 街边小吃 / 夜宵
+{name:"烤冷面",kcal:320,p:8.0,c:55.0,f:8.0,units:{份:300}},
+{name:"手抓饼",kcal:380,p:8.0,c:42.0,f:20.0,units:{个:150}},
+{name:"杂粮煎饼",kcal:360,p:10.0,c:45.0,f:15.0,units:{个:200}},
+{name:"鸡蛋仔",kcal:280,p:6.0,c:40.0,f:10.0,units:{份:100}},
+{name:"章鱼小丸子",kcal:250,p:6.0,c:30.0,f:11.0,units:{份:100}},
+{name:"烤肠",kcal:180,p:7.0,c:4.0,f:15.0,units:{根:50}},
+{name:"炸鸡柳",kcal:280,p:14.0,c:18.0,f:17.0,units:{份:100}},
+{name:"烤面筋",kcal:110,p:9.0,c:13.0,f:2.0,units:{串:50}},
+{name:"钵钵鸡",kcal:200,p:15.0,c:8.0,f:12.0,units:{份:200}},
+{name:"鸡米花",kcal:290,p:12.0,c:18.0,f:18.0,units:{份:100}},
 
 {name:"糙米饭",kcal:110,p:2.5,c:23.0,f:0.7,units:{碗:150}},
 {name:"杂粮饭",kcal:110,p:3.0,c:23.0,f:0.8,units:{碗:150}},
