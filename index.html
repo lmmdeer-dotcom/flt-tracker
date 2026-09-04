@@ -253,15 +253,43 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <div class="card" style="grid-row:span 2"><h3>记录饮食</h3>
         <label class="f">日期</label><input class="in" type="date" id="mDate">
         <div class="row" style="margin-top:10px"><div class="cell"><label class="f">餐次</label><select class="in" id="mMeal">
-          <option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option></select></div>
-        <div class="cell"><label class="f">热量 kcal</label><input class="in num-inline" type="number" step="10" id="mKcal" placeholder="约多少千卡"></div></div>
-        <div class="row"><div class="cell"><label class="f">蛋白质 g</label><input class="in num-inline" type="number" step="1" id="mP" placeholder="可选"></div>
-        <div class="cell"><label class="f">碳水 g</label><input class="in num-inline" type="number" step="1" id="mC" placeholder="可选"></div>
-        <div class="cell"><label class="f">脂肪 g</label><input class="in num-inline" type="number" step="1" id="mF" placeholder="可选"></div></div>
-        <label class="f">备注</label><input class="in" id="mNote" placeholder="吃了什么？">
+          <option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option></select></div></div>
+
+        <!-- 添加食物 -->
+        <div style="margin-top:14px;padding:12px;background:var(--paper2);border-radius:12px;border:1px dashed var(--line)">
+          <label class="f">食物名称</label>
+          <div style="position:relative">
+            <input class="in" id="mFoodName" placeholder="输入食物名称，如：米饭、鸡蛋、牛奶…" autocomplete="off" oninput="foodSuggest()" onblur="setTimeout(()=>{const d=$('mFoodDrop');if(d)d.style.display='none';},200)">
+            <div id="mFoodDrop" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:10;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.08);max-height:220px;overflow:auto;margin-top:2px"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div class="cell" style="flex:1"><label class="f">数量</label><input class="in num-inline" type="number" step="0.5" id="mFoodAmt" placeholder="1" value="1" oninput="previewFoodCalc()"></div>
+            <div class="cell" style="flex:1"><label class="f">单位</label><select class="in" id="mFoodUnit" onchange="previewFoodCalc()"><option>个</option><option>碗</option><option>杯</option><option>份</option><option>克</option><option>两</option><option>根</option><option>块</option><option>片</option><option>串</option><option>颗</option><option>包</option><option>罐</option><option>瓶</option><option>盒</option><option>勺</option><option>把</option></select></div>
+            <div class="cell" style="flex:1;display:flex;align-items:flex-end"><button class="btn" style="width:100%" onclick="addFoodItem()">+ 添加</button></div>
+          </div>
+          <div id="mFoodCalc" class="note" style="margin-top:8px;color:var(--forest2)"></div>
+        </div>
+
+        <!-- 已添加列表 -->
+        <div id="mFoodList" style="margin-top:10px"></div>
+
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn acc" onclick="addMeal()">保存</button>
-          <button class="btn danger mini" onclick="clearTab('meals')">清空饮食</button></div>
+          <button class="btn acc" onclick="saveMeal()">保存整餐</button>
+          <button class="btn ghost mini" onclick="clearFoodItems()">清空列表</button>
+          <button class="btn danger mini" onclick="clearTab('meals')">清空当日</button></div>
+
+        <!-- 手动填写（折叠） -->
+        <details style="margin-top:14px"><summary class="note" style="cursor:pointer;color:var(--mute)">手动填写热量 / 蛋白质 / 碳水 / 脂肪（食物不在库里时）</summary>
+          <div style="padding-top:10px">
+            <div class="row"><div class="cell"><label class="f">热量 kcal</label><input class="in num-inline" type="number" step="10" id="mKcal" placeholder="约多少千卡"></div>
+            <div class="cell"><label class="f">蛋白质 g</label><input class="in num-inline" type="number" step="1" id="mP" placeholder="可选"></div></div>
+            <div class="row"><div class="cell"><label class="f">碳水 g</label><input class="in num-inline" type="number" step="1" id="mC" placeholder="可选"></div>
+            <div class="cell"><label class="f">脂肪 g</label><input class="in num-inline" type="number" step="1" id="mF" placeholder="可选"></div></div>
+            <label class="f">备注</label><input class="in" id="mNote" placeholder="吃了什么？">
+            <button class="btn" style="margin-top:8px" onclick="addMealManual()">保存（手动）</button>
+          </div>
+        </details>
+
         <div class="advice" style="margin:14px 0 0;border-left-color:var(--forest)"><b style="color:var(--forest2)">热量缺口提醒</b>
           <div id="mCalRemind" class="note" style="margin-top:4px"></div></div>
       </div>
@@ -397,8 +425,6 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
       <div class="set-row"><div class="l"><b>导入备份 / 合并</b><span>选择 JSON 备份，按更新时间合并（不会丢数据）</span></div>
         <button class="btn ghost" onclick="document.getElementById('impFile').click()">导入</button>
         <input type="file" id="impFile" accept="application/json,.json" style="display:none" onchange="importAll(event)"></div>
-      <div class="set-row"><div class="l"><b>载入示例数据</b><span>为当前成员生成约 10 周示例身体记录等</span></div>
-        <button class="btn ghost" onclick="seedAll()">载入示例</button></div>
       <div class="set-row"><div class="l"><b>仅保留当前成员数据</b><span>删除本机其他成员的记录，保留当前成员（切换成员后可用）</span></div>
         <button class="btn danger" onclick="keepOnlyCurrent()">清理他人数据</button></div>
       <div class="set-row"><div class="l"><b>清空全部数据</b><span>删除本机全部表数据与个人资料；云端数据保留，重新同步会拉回</span></div>
@@ -439,6 +465,520 @@ function ask(msg,ph,btn){return new Promise(res=>{const m=$("modalMask"),b=$("mo
 window.closeAsk=()=>{$("modalMask").classList.remove("on");if(window._askRes)window._askRes(null);};
 window.confirmAsk=(t)=>{const v=window._askI?window._askI.value.trim():"";window._askRes&&window._askRes({v});$("modalMask").classList.remove("on");};
 window.go=(v)=>showView(v);
+
+/* ================= 食物营养数据库 ================= */
+const FOOD_DB=[
+{name:"米饭",kcal:116,p:2.6,c:25.9,f:0.3,units:{碗:150,份:100}},
+{name:"白粥",kcal:46,p:1.1,c:9.9,f:0.1,units:{碗:250}},
+{name:"馒头",kcal:223,p:7.0,c:47.0,f:1.1,units:{个:100}},
+{name:"花卷",kcal:214,p:6.4,c:45.6,f:0.9,units:{个:80}},
+{name:"包子(肉)",kcal:227,p:8.5,c:35.0,f:6.5,units:{个:100}},
+{name:"包子(菜)",kcal:168,p:5.2,c:32.0,f:2.8,units:{个:100}},
+{name:"饺子(猪肉)",kcal:218,p:9.0,c:28.0,f:7.5,units:{个:20}},
+{name:"馄饨",kcal:198,p:8.5,c:28.0,f:5.8,units:{碗:200}},
+{name:"面条(煮)",kcal:110,p:3.8,c:22.8,f:0.7,units:{碗:200}},
+{name:"炒面",kcal:180,p:5.5,c:30.0,f:5.0,units:{份:200}},
+{name:"米粉",kcal:112,p:2.0,c:24.0,f:0.5,units:{碗:200}},
+{name:"河粉",kcal:116,p:1.5,c:25.0,f:0.8,units:{碗:200}},
+{name:"肠粉",kcal:110,p:3.0,c:22.0,f:1.0,units:{份:150}},
+{name:"油条",kcal:388,p:6.9,c:51.0,f:17.6,units:{根:50}},
+{name:"煎饼",kcal:305,p:7.5,c:45.0,f:10.5,units:{个:100}},
+{name:"鸡蛋灌饼",kcal:280,p:9.0,c:38.0,f:9.5,units:{个:150}},
+{name:"三明治",kcal:250,p:10.0,c:30.0,f:9.0,units:{个:120}},
+{name:"汉堡包",kcal:295,p:13.0,c:32.0,f:12.0,units:{个:150}},
+{name:"吐司",kcal:265,p:8.5,c:48.0,f:4.5,units:{片:35}},
+{name:"全麦面包",kcal:246,p:8.5,c:44.0,f:3.5,units:{片:35}},
+{name:"燕麦片",kcal:377,p:13.5,c:66.0,f:6.7,units:{碗:40}},
+{name:"玉米",kcal:112,p:4.0,c:22.8,f:1.2,units:{根:200}},
+{name:"红薯",kcal:86,p:1.6,c:20.1,f:0.1,units:{个:150}},
+{name:"紫薯",kcal:82,p:1.3,c:18.0,f:0.2,units:{个:120}},
+{name:"土豆",kcal:77,p:2.0,c:17.5,f:0.1,units:{个:150}},
+{name:"鸡蛋",kcal:144,p:13.3,c:2.8,f:8.8,units:{个:50}},
+{name:"水煮蛋",kcal:143,p:12.5,c:1.1,f:9.5,units:{个:50}},
+{name:"茶叶蛋",kcal:140,p:12.0,c:1.5,f:9.0,units:{个:50}},
+{name:"煎蛋",kcal:196,p:12.0,c:1.5,f:15.5,units:{个:50}},
+{name:"荷包蛋",kcal:180,p:12.0,c:1.2,f:13.5,units:{个:50}},
+{name:"皮蛋",kcal:171,p:13.0,c:4.5,f:10.5,units:{个:50}},
+{name:"咸鸭蛋",kcal:190,p:12.5,c:6.5,f:12.0,units:{个:65}},
+{name:"牛奶",kcal:54,p:3.0,c:4.7,f:3.2,units:{杯:250,盒:250}},
+{name:"酸奶",kcal:72,p:2.5,c:9.0,f:2.7,units:{杯:150,盒:100}},
+{name:"豆浆",kcal:31,p:2.4,c:1.8,f:1.5,units:{杯:250,碗:250}},
+{name:"豆腐脑",kcal:47,p:3.3,c:3.4,f:2.2,units:{碗:250}},
+{name:"豆腐",kcal:76,p:8.1,c:1.9,f:4.8,units:{块:150}},
+{name:"豆腐干",kcal:140,p:16.0,c:5.0,f:6.5,units:{块:50}},
+{name:"千张",kcal:260,p:24.0,c:5.0,f:16.0,units:{张:50}},
+{name:"腐竹",kcal:460,p:44.6,c:21.3,f:21.7,units:{份:50}},
+{name:"素鸡",kcal:192,p:16.0,c:4.0,f:12.5,units:{块:100}},
+{name:"猪肉(瘦)",kcal:143,p:20.3,c:1.5,f:6.2,units:{份:100}},
+{name:"猪肉(肥瘦)",kcal:395,p:13.2,c:2.4,f:37.0,units:{份:100}},
+{name:"五花肉",kcal:349,p:13.2,c:2.4,f:31.0,units:{份:100}},
+{name:"排骨",kcal:278,p:16.7,c:0.0,f:23.1,units:{份:100}},
+{name:"猪蹄",kcal:260,p:23.6,c:0.0,f:18.8,units:{个:200}},
+{name:"猪肝",kcal:129,p:19.3,c:5.0,f:3.5,units:{份:100}},
+{name:"牛肉(瘦)",kcal:106,p:20.2,c:1.2,f:2.3,units:{份:100}},
+{name:"牛腩",kcal:332,p:17.0,c:0.0,f:29.3,units:{份:100}},
+{name:"牛排",kcal:271,p:26.0,c:0.0,f:18.0,units:{块:150}},
+{name:"酱牛肉",kcal:246,p:31.4,c:2.0,f:11.9,units:{份:100}},
+{name:"羊肉(瘦)",kcal:118,p:20.5,c:0.0,f:3.9,units:{份:100}},
+{name:"鸡腿",kcal:181,p:16.0,c:0.0,f:13.0,units:{个:120}},
+{name:"鸡胸肉",kcal:133,p:19.4,c:2.5,f:5.0,units:{块:150}},
+{name:"鸡翅",kcal:194,p:17.4,c:0.0,f:13.5,units:{个:50}},
+{name:"鸡爪",kcal:254,p:19.4,c:2.7,f:16.4,units:{个:30}},
+{name:"鸡翅根",kcal:202,p:18.3,c:0.0,f:14.0,units:{个:50}},
+{name:"鸭腿",kcal:217,p:15.5,c:0.0,f:16.5,units:{个:150}},
+{name:"鱼肉(平均)",kcal:113,p:18.5,c:0.0,f:4.0,units:{份:100}},
+{name:"鲈鱼",kcal:105,p:18.6,c:0.0,f:3.4,units:{份:100}},
+{name:"鲫鱼",kcal:108,p:17.1,c:0.0,f:4.1,units:{条:300}},
+{name:"带鱼",kcal:127,p:17.7,c:0.0,f:4.9,units:{段:100}},
+{name:"鳕鱼",kcal:82,p:17.8,c:0.0,f:0.7,units:{份:100}},
+{name:"三文鱼",kcal:139,p:17.2,c:0.0,f:7.8,units:{份:100}},
+{name:"虾",kcal:93,p:18.6,c:0.8,f:0.8,units:{只:15}},
+{name:"虾仁",kcal:48,p:10.4,c:0.0,f:0.7,units:{份:100}},
+{name:"蟹",kcal:103,p:17.5,c:1.1,f:2.6,units:{只:150}},
+{name:"花甲",kcal:62,p:10.1,c:2.1,f:1.2,units:{份:100}},
+{name:"扇贝",kcal:84,p:15.2,c:2.6,f:1.5,units:{个:25}},
+{name:"鱿鱼",kcal:92,p:17.4,c:3.0,f:1.6,units:{份:100}},
+{name:"海参",kcal:71,p:16.5,c:0.9,f:0.2,units:{个:50}},
+{name:"海带",kcal:13,p:1.2,c:2.1,f:0.1,units:{份:100}},
+{name:"紫菜",kcal:250,p:26.7,c:44.1,f:1.1,units:{份:10}},
+{name:"青菜",kcal:18,p:1.5,c:2.9,f:0.3,units:{份:100}},
+{name:"白菜",kcal:17,p:1.5,c:3.2,f:0.1,units:{份:100}},
+{name:"生菜",kcal:15,p:1.4,c:2.2,f:0.2,units:{份:100}},
+{name:"菠菜",kcal:23,p:2.9,c:3.6,f:0.4,units:{份:100}},
+{name:"西兰花",kcal:34,p:2.8,c:7.0,f:0.4,units:{份:100}},
+{name:"花菜",kcal:25,p:2.1,c:4.9,f:0.3,units:{份:100}},
+{name:"芹菜",kcal:14,p:0.8,c:2.9,f:0.1,units:{份:100}},
+{name:"黄瓜",kcal:16,p:0.8,c:2.9,f:0.2,units:{根:150}},
+{name:"番茄",kcal:18,p:0.9,c:3.9,f:0.2,units:{个:150}},
+{name:"胡萝卜",kcal:41,p:0.9,c:9.6,f:0.2,units:{根:100}},
+{name:"白萝卜",kcal:16,p:0.7,c:3.5,f:0.1,units:{份:100}},
+{name:"冬瓜",kcal:12,p:0.4,c:2.6,f:0.2,units:{份:100}},
+{name:"丝瓜",kcal:20,p:1.3,c:4.0,f:0.2,units:{份:100}},
+{name:"茄子",kcal:23,p:1.0,c:5.5,f:0.2,units:{个:150}},
+{name:"青椒",kcal:22,p:1.0,c:5.1,f:0.2,units:{个:80}},
+{name:"辣椒",kcal:40,p:1.9,c:8.8,f:0.4,units:{个:20}},
+{name:"洋葱",kcal:40,p:1.1,c:9.0,f:0.1,units:{个:150}},
+{name:"大蒜",kcal:149,p:5.2,c:33.1,f:0.2,units:{瓣:5}},
+{name:"姜",kcal:46,p:1.3,c:10.3,f:0.6,units:{片:10}},
+{name:"葱",kcal:33,p:2.6,c:4.9,f:0.3,units:{根:10}},
+{name:"蘑菇",kcal:22,p:2.7,c:3.3,f:0.3,units:{份:100}},
+{name:"香菇",kcal:26,p:2.2,c:4.6,f:0.3,units:{个:15}},
+{name:"金针菇",kcal:32,p:2.7,c:6.0,f:0.4,units:{份:100}},
+{name:"木耳",kcal:27,p:1.5,c:6.0,f:0.2,units:{份:100}},
+{name:"银耳",kcal:200,p:10.0,c:36.9,f:1.4,units:{份:100}},
+{name:"苹果",kcal:52,p:0.3,c:13.8,f:0.2,units:{个:200}},
+{name:"香蕉",kcal:89,p:1.1,c:22.8,f:0.3,units:{根:120}},
+{name:"橙子",kcal:47,p:0.9,c:11.8,f:0.1,units:{个:150}},
+{name:"橘子",kcal:44,p:0.8,c:10.0,f:0.2,units:{个:100}},
+{name:"梨",kcal:57,p:0.4,c:15.5,f:0.1,units:{个:200}},
+{name:"西瓜",kcal:30,p:0.6,c:7.6,f:0.2,units:{块:300}},
+{name:"葡萄",kcal:69,p:0.7,c:18.1,f:0.2,units:{串:200}},
+{name:"草莓",kcal:32,p:0.7,c:7.7,f:0.3,units:{份:150}},
+{name:"蓝莓",kcal:57,p:0.7,c:14.5,f:0.3,units:{盒:125}},
+{name:"芒果",kcal:60,p:0.8,c:15.0,f:0.4,units:{个:200}},
+{name:"猕猴桃",kcal:61,p:1.1,c:14.7,f:0.5,units:{个:80}},
+{name:"火龙果",kcal:55,p:1.1,c:13.3,f:0.4,units:{个:300}},
+{name:"榴莲",kcal:147,p:1.5,c:27.1,f:5.3,units:{块:100}},
+{name:"荔枝",kcal:66,p:0.8,c:16.5,f:0.4,units:{颗:20}},
+{name:"龙眼",kcal:71,p:1.2,c:16.6,f:0.1,units:{颗:10}},
+{name:"桃子",kcal:39,p:0.9,c:9.5,f:0.2,units:{个:150}},
+{name:"樱桃",kcal:63,p:1.1,c:16.0,f:0.2,units:{份:100}},
+{name:"菠萝",kcal:50,p:0.5,c:13.1,f:0.1,units:{块:150}},
+{name:"哈密瓜",kcal:34,p:0.5,c:8.2,f:0.2,units:{块:200}},
+{name:"木瓜",kcal:43,p:0.5,c:10.8,f:0.3,units:{个:300}},
+{name:"柚子",kcal:42,p:0.8,c:9.6,f:0.0,units:{瓣:100}},
+{name:"柠檬",kcal:29,p:1.1,c:9.3,f:0.3,units:{个:80}},
+{name:"牛油果",kcal:160,p:2.0,c:8.5,f:14.7,units:{个:150}},
+{name:"花生",kcal:567,p:24.8,c:16.1,f:49.2,units:{把:30}},
+{name:"核桃",kcal:654,p:15.2,c:13.7,f:65.2,units:{个:10}},
+{name:"杏仁",kcal:578,p:21.2,c:19.7,f:50.6,units:{把:30}},
+{name:"瓜子",kcal:615,p:24.0,c:14.0,f:52.0,units:{把:30}},
+{name:"腰果",kcal:553,p:18.2,c:30.2,f:43.9,units:{把:30}},
+{name:"开心果",kcal:562,p:20.6,c:27.5,f:45.3,units:{把:30}},
+{name:"葡萄干",kcal:299,p:3.1,c:79.2,f:0.5,units:{把:30}},
+{name:"红枣",kcal:276,p:3.2,c:67.8,f:0.5,units:{颗:10}},
+{name:"枸杞",kcal:258,p:13.9,c:64.1,f:1.5,units:{把:15}},
+{name:"蜂蜜",kcal:304,p:0.3,c:82.4,f:0.0,units:{勺:20}},
+{name:"白糖",kcal:400,p:0.0,c:100.0,f:0.0,units:{勺:10}},
+{name:"红糖",kcal:389,p:0.7,c:93.5,f:0.0,units:{勺:15}},
+{name:"冰糖",kcal:397,p:0.0,c:99.3,f:0.0,units:{块:10}},
+{name:"酱油",kcal:63,p:5.6,c:10.1,f:0.1,units:{勺:15}},
+{name:"醋",kcal:31,p:2.1,c:4.2,f:0.0,units:{勺:15}},
+{name:"料酒",kcal:88,p:0.3,c:0.0,f:0.0,units:{勺:15}},
+{name:"蚝油",kcal:114,p:2.2,c:23.0,f:0.3,units:{勺:15}},
+{name:"豆瓣酱",kcal:160,p:6.5,c:24.0,f:4.5,units:{勺:20}},
+{name:"甜面酱",kcal:178,p:5.5,c:32.0,f:3.0,units:{勺:20}},
+{name:"辣椒酱",kcal:126,p:2.5,c:22.0,f:3.5,units:{勺:20}},
+{name:"番茄酱",kcal:97,p:1.8,c:22.0,f:0.5,units:{勺:20}},
+{name:"沙拉酱",kcal:680,p:1.5,c:2.0,f:74.0,units:{勺:15}},
+{name:"花生酱",kcal:598,p:25.0,c:16.0,f:50.0,units:{勺:20}},
+{name:"芝麻酱",kcal:630,p:19.2,c:21.9,f:52.7,units:{勺:20}},
+{name:"食用油",kcal:884,p:0.0,c:0.0,f:100.0,units:{勺:15}},
+{name:"橄榄油",kcal:884,p:0.0,c:0.0,f:100.0,units:{勺:15}},
+{name:"黄油",kcal:717,p:0.9,c:0.1,f:81.1,units:{勺:15}},
+{name:"猪油",kcal:902,p:0.0,c:0.0,f:100.0,units:{勺:15}},
+{name:"盐",kcal:0,p:0.0,c:0.0,f:0.0,units:{勺:5}},
+{name:"味精",kcal:0,p:0.0,c:0.0,f:0.0,units:{勺:5}},
+{name:"鸡精",kcal:224,p:10.7,c:32.5,f:5.7,units:{勺:5}},
+{name:"可乐",kcal:42,p:0.0,c:10.6,f:0.0,units:{罐:330,杯:250}},
+{name:"雪碧",kcal:41,p:0.0,c:10.3,f:0.0,units:{罐:330,杯:250}},
+{name:"橙汁",kcal:45,p:0.7,c:10.4,f:0.2,units:{杯:250}},
+{name:"苹果汁",kcal:46,p:0.1,c:11.3,f:0.1,units:{杯:250}},
+{name:"椰汁",kcal:51,p:0.5,c:10.0,f:1.0,units:{杯:250}},
+{name:"奶茶(珍珠)",kcal:350,p:3.0,c:55.0,f:12.0,units:{杯:500}},
+{name:"奶茶(无糖)",kcal:200,p:3.0,c:25.0,f:8.0,units:{杯:500}},
+{name:"咖啡(美式)",kcal:2,p:0.3,c:0.0,f:0.0,units:{杯:250}},
+{name:"咖啡(拿铁)",kcal:63,p:3.5,c:5.0,f:3.5,units:{杯:250}},
+{name:"咖啡(卡布奇诺)",kcal:64,p:3.5,c:5.5,f:3.0,units:{杯:250}},
+{name:"绿茶",kcal:1,p:0.1,c:0.2,f:0.0,units:{杯:250}},
+{name:"红茶",kcal:1,p:0.1,c:0.3,f:0.0,units:{杯:250}},
+{name:"乌龙茶",kcal:1,p:0.1,c:0.2,f:0.0,units:{杯:250}},
+{name:"啤酒",kcal:43,p:0.5,c:3.6,f:0.0,units:{罐:330,瓶:500}},
+{name:"红酒",kcal:85,p:0.1,c:2.6,f:0.0,units:{杯:150}},
+{name:"白酒",kcal:295,p:0.0,c:0.0,f:0.0,units:{杯:50}},
+{name:"巧克力",kcal:546,p:4.9,c:61.0,f:31.3,units:{块:20}},
+{name:"饼干",kcal:502,p:7.0,c:64.0,f:25.0,units:{片:15}},
+{name:"薯片",kcal:536,p:7.0,c:53.0,f:35.0,units:{包:50}},
+{name:"蛋糕",kcal:371,p:6.0,c:53.0,f:15.0,units:{块:100}},
+{name:"蛋挞",kcal:330,p:5.5,c:28.0,f:22.0,units:{个:50}},
+{name:"甜甜圈",kcal:452,p:4.9,c:50.0,f:25.5,units:{个:60}},
+{name:"冰淇淋",kcal:207,p:3.5,c:24.0,f:11.0,units:{杯:100}},
+{name:"布丁",kcal:120,p:3.0,c:20.0,f:3.5,units:{杯:100}},
+{name:"果冻",kcal:62,p:0.0,c:15.0,f:0.0,units:{个:100}},
+{name:"糖果",kcal:400,p:0.0,c:99.0,f:0.0,units:{颗:5}},
+{name:"爆米花",kcal:387,p:12.9,c:77.9,f:4.5,units:{份:50}},
+{name:"海苔",kcal:270,p:30.0,c:20.0,f:10.0,units:{包:5}},
+{name:"辣条",kcal:420,p:8.0,c:50.0,f:22.0,units:{包:30}},
+{name:"鸡爪(卤)",kcal:220,p:18.0,c:3.0,f:15.0,units:{个:40}},
+{name:"鸭脖",kcal:280,p:22.0,c:5.0,f:18.0,units:{根:30}},
+{name:"卤蛋",kcal:145,p:12.0,c:1.5,f:9.5,units:{个:50}},
+{name:"香肠",kcal:321,p:14.0,c:2.0,f:28.0,units:{根:50}},
+{name:"火腿肠",kcal:212,p:11.0,c:8.0,f:15.0,units:{根:50}},
+{name:"午餐肉",kcal:229,p:10.0,c:3.0,f:20.0,units:{片:40}},
+{name:"培根",kcal:541,p:37.0,c:1.4,f:41.8,units:{片:30}},
+{name:"鱼丸",kcal:107,p:11.0,c:8.0,f:3.5,units:{个:20}},
+{name:"肉丸",kcal:200,p:12.0,c:8.0,f:13.0,units:{个:30}},
+{name:"蟹棒",kcal:123,p:10.5,c:10.0,f:4.5,units:{个:20}},
+{name:"鱼豆腐",kcal:150,p:10.0,c:10.0,f:7.5,units:{块:25}},
+{name:"冻豆腐",kcal:107,p:12.2,c:3.5,f:5.3,units:{块:100}},
+{name:"凉粉",kcal:37,p:0.2,c:8.9,f:0.1,units:{碗:200}},
+{name:"凉皮",kcal:117,p:4.0,c:21.0,f:1.8,units:{份:200}},
+{name:"凉面",kcal:167,p:5.0,c:30.0,f:3.5,units:{份:200}},
+{name:"煎饼果子",kcal:280,p:8.0,c:38.0,f:10.0,units:{个:200}},
+{name:"肉夹馍",kcal:290,p:12.0,c:35.0,f:10.5,units:{个:150}},
+{name:"鸡蛋饼",kcal:250,p:8.0,c:32.0,f:9.0,units:{个:150}},
+{name:"葱油饼",kcal:320,p:6.0,c:38.0,f:16.0,units:{个:150}},
+{name:"韭菜盒子",kcal:240,p:6.0,c:30.0,f:10.5,units:{个:120}},
+{name:"生煎包",kcal:240,p:8.0,c:32.0,f:8.5,units:{个:60}},
+{name:"小笼包",kcal:220,p:7.5,c:30.0,f:7.5,units:{个:30}},
+{name:"烧麦",kcal:210,p:6.5,c:32.0,f:6.5,units:{个:50}},
+{name:"春卷",kcal:250,p:5.5,c:28.0,f:13.0,units:{个:50}},
+{name:"粽子(肉)",kcal:220,p:6.5,c:35.0,f:6.5,units:{个:150}},
+{name:"粽子(甜)",kcal:190,p:4.0,c:40.0,f:1.5,units:{个:150}},
+{name:"汤圆",kcal:230,p:4.0,c:45.0,f:3.5,units:{个:20}},
+{name:"年糕",kcal:154,p:3.3,c:34.7,f:0.6,units:{块:50}},
+{name:"芝麻糊",kcal:430,p:10.0,c:60.0,f:16.0,units:{碗:40}},
+{name:"藕粉",kcal:372,p:0.2,c:93.0,f:0.1,units:{碗:30}},
+{name:"银耳羹",kcal:80,p:1.5,c:18.0,f:0.3,units:{碗:250}},
+{name:"绿豆汤",kcal:60,p:3.0,c:11.0,f:0.5,units:{碗:250}},
+{name:"红豆汤",kcal:80,p:3.5,c:15.0,f:0.5,units:{碗:250}},
+{name:"姜汤",kcal:35,p:0.2,c:8.5,f:0.1,units:{碗:250}},
+{name:"紫菜蛋花汤",kcal:25,p:2.0,c:2.5,f:0.8,units:{碗:250}},
+{name:"番茄蛋汤",kcal:35,p:2.5,c:3.5,f:1.5,units:{碗:250}},
+{name:"排骨汤",kcal:65,p:5.5,c:2.5,f:4.0,units:{碗:250}},
+{name:"鸡汤",kcal:45,p:5.0,c:1.0,f:2.5,units:{碗:250}},
+{name:"鱼汤",kcal:40,p:6.0,c:0.5,f:1.5,units:{碗:250}},
+{name:"骨头汤",kcal:55,p:5.0,c:1.0,f:3.5,units:{碗:250}},
+{name:"炒青菜",kcal:45,p:2.0,c:5.0,f:2.5,units:{份:150}},
+{name:"炒西兰花",kcal:55,p:3.5,c:7.0,f:2.0,units:{份:150}},
+{name:"炒土豆丝",kcal:95,p:2.0,c:18.0,f:2.0,units:{份:150}},
+{name:"番茄炒蛋",kcal:95,p:5.5,c:5.5,f:6.0,units:{份:150}},
+{name:"青椒炒肉",kcal:135,p:10.0,c:5.5,f:8.0,units:{份:150}},
+{name:"鱼香肉丝",kcal:145,p:10.5,c:8.0,f:8.0,units:{份:150}},
+{name:"宫保鸡丁",kcal:155,p:12.0,c:7.0,f:9.0,units:{份:150}},
+{name:"麻婆豆腐",kcal:120,p:7.0,c:6.0,f:7.5,units:{份:150}},
+{name:"红烧肉",kcal:320,p:12.0,c:8.0,f:26.0,units:{份:150}},
+{name:"糖醋排骨",kcal:280,p:14.0,c:18.0,f:16.0,units:{份:150}},
+{name:"清蒸鱼",kcal:105,p:16.0,c:2.0,f:3.5,units:{份:150}},
+{name:"白切鸡",kcal:165,p:20.0,c:0.0,f:9.0,units:{份:150}},
+{name:"口水鸡",kcal:185,p:18.0,c:3.0,f:11.0,units:{份:150}},
+{name:"水煮鱼",kcal:145,p:14.0,c:3.0,f:8.5,units:{份:150}},
+{name:"酸菜鱼",kcal:125,p:13.0,c:4.0,f:6.0,units:{份:150}},
+{name:"水煮牛肉",kcal:155,p:15.0,c:5.0,f:8.0,units:{份:150}},
+{name:"回锅肉",kcal:280,p:12.0,c:5.0,f:23.0,units:{份:150}},
+{name:"小炒肉",kcal:220,p:12.0,c:4.0,f:17.0,units:{份:150}},
+{name:"木须肉",kcal:140,p:10.0,c:6.0,f:8.5,units:{份:150}},
+{name:"京酱肉丝",kcal:195,p:12.0,c:10.0,f:12.0,units:{份:150}},
+{name:"可乐鸡翅",kcal:220,p:14.0,c:12.0,f:12.0,units:{份:150}},
+{name:"蒜蓉粉丝蒸虾",kcal:115,p:14.0,c:8.0,f:2.5,units:{份:150}},
+{name:"蒸蛋羹",kcal:75,p:6.5,c:2.0,f:4.5,units:{碗:200}},
+{name:"炒河粉",kcal:180,p:4.5,c:30.0,f:5.5,units:{份:200}},
+{name:"炒米粉",kcal:175,p:4.0,c:28.0,f:5.0,units:{份:200}},
+{name:"蛋炒饭",kcal:170,p:5.5,c:25.0,f:5.5,units:{份:200}},
+{name:"扬州炒饭",kcal:185,p:7.0,c:26.0,f:6.0,units:{份:200}},
+{name:"煲仔饭",kcal:220,p:8.0,c:30.0,f:7.0,units:{份:300}},
+{name:"卤肉饭",kcal:260,p:10.0,c:28.0,f:12.0,units:{份:300}},
+{name:"鸡腿饭",kcal:240,p:14.0,c:26.0,f:8.5,units:{份:300}},
+{name:"牛肉面",kcal:195,p:10.0,c:28.0,f:5.5,units:{碗:400}},
+{name:"炸酱面",kcal:205,p:8.5,c:30.0,f:6.5,units:{碗:400}},
+{name:"云吞面",kcal:160,p:8.0,c:26.0,f:3.5,units:{碗:350}},
+{name:"担担面",kcal:210,p:8.0,c:28.0,f:7.5,units:{碗:350}},
+{name:"酸辣粉",kcal:155,p:3.5,c:28.0,f:3.5,units:{碗:300}},
+{name:"麻辣烫",kcal:180,p:8.0,c:20.0,f:7.5,units:{份:400}},
+{name:"火锅(平均)",kcal:250,p:12.0,c:15.0,f:16.0,units:{份:300}},
+{name:"烧烤(平均)",kcal:280,p:15.0,c:8.0,f:20.0,units:{串:50}},
+{name:"炸鸡",kcal:290,p:20.0,c:10.0,f:19.0,units:{块:100}},
+{name:"薯条",kcal:312,p:3.4,c:41.0,f:14.5,units:{份:100}},
+{name:"披萨",kcal:266,p:11.0,c:33.0,f:10.0,units:{片:100}},
+{name:"意面",kcal:131,p:5.0,c:25.0,f:1.1,units:{份:200}},
+{name:"牛排(煎)",kcal:271,p:26.0,c:0.0,f:18.0,units:{块:150}},
+{name:"沙拉",kcal:65,p:3.0,c:8.0,f:2.5,units:{份:150}},
+{name:"寿司",kcal:143,p:5.0,c:28.0,f:0.5,units:{个:30}},
+{name:"刺身",kcal:120,p:20.0,c:2.0,f:3.0,units:{份:100}},
+{name:"拉面",kcal:180,p:7.0,c:28.0,f:5.0,units:{碗:400}},
+{name:"乌冬面",kcal:105,p:3.5,c:20.0,f:1.0,units:{碗:300}},
+{name:"天妇罗",kcal:260,p:8.0,c:20.0,f:16.0,units:{份:100}},
+{name:"咖喱饭",kcal:190,p:6.0,c:28.0,f:6.0,units:{份:300}},
+{name:"蛋包饭",kcal:210,p:8.0,c:28.0,f:6.5,units:{份:300}},
+{name:"石锅拌饭",kcal:185,p:7.0,c:28.0,f:5.0,units:{份:350}},
+{name:"泡菜",kcal:33,p:1.5,c:5.5,f:0.5,units:{份:50}},
+{name:"海带汤",kcal:25,p:1.5,c:3.5,f:0.5,units:{碗:250}},
+{name:"味噌汤",kcal:35,p:2.5,c:4.0,f:1.0,units:{碗:250}},
+{name:"关东煮",kcal:120,p:6.0,c:12.0,f:4.5,units:{份:200}},
+{name:"肉丸汤",kcal:95,p:7.5,c:5.0,f:5.0,units:{碗:250}},
+{name:"皮蛋瘦肉粥",kcal:75,p:4.5,c:11.0,f:1.5,units:{碗:250}},
+{name:"南瓜粥",kcal:55,p:1.5,c:11.0,f:0.5,units:{碗:250}},
+{name:"小米粥",kcal:46,p:1.4,c:9.0,f:0.7,units:{碗:250}},
+{name:"黑米粥",kcal:55,p:2.0,c:11.0,f:0.5,units:{碗:250}},
+{name:"燕麦粥",kcal:68,p:2.5,c:12.0,f:1.2,units:{碗:250}},
+{name:"银耳莲子羹",kcal:85,p:2.0,c:18.0,f:0.5,units:{碗:250}},
+{name:"酒酿圆子",kcal:120,p:2.0,c:25.0,f:1.0,units:{碗:200}},
+{name:"醪糟",kcal:100,p:1.5,c:22.0,f:0.5,units:{碗:200}},
+{name:"粽子",kcal:200,p:5.0,c:38.0,f:3.5,units:{个:150}},
+{name:"月饼",kcal:400,p:6.0,c:60.0,f:16.0,units:{个:100}},
+{name:"蛋黄酥",kcal:430,p:7.0,c:45.0,f:24.0,units:{个:80}},
+{name:"凤梨酥",kcal:450,p:5.0,c:55.0,f:22.0,units:{个:50}},
+{name:"桃酥",kcal:520,p:7.0,c:55.0,f:30.0,units:{个:50}},
+{name:"绿豆糕",kcal:350,p:6.0,c:60.0,f:10.0,units:{块:50}},
+{name:"麻花",kcal:520,p:8.0,c:50.0,f:32.0,units:{根:50}},
+{name:"沙琪玛",kcal:460,p:6.0,c:55.0,f:24.0,units:{块:30}},
+{name:"山楂片",kcal:380,p:2.0,c:85.0,f:1.0,units:{片:10}},
+{name:"话梅",kcal:280,p:2.0,c:60.0,f:1.0,units:{颗:5}},
+{name:"牛肉干",kcal:550,p:45.0,c:15.0,f:35.0,units:{片:20}},
+{name:"猪肉脯",kcal:430,p:28.0,c:25.0,f:24.0,units:{片:20}},
+{name:"鱼片干",kcal:330,p:45.0,c:15.0,f:10.0,units:{片:20}},
+{name:"豆干零食",kcal:350,p:18.0,c:20.0,f:22.0,units:{包:50}},
+{name:"魔芋爽",kcal:120,p:1.0,c:15.0,f:6.0,units:{包:50}},
+{name:"果冻爽",kcal:50,p:0.0,c:12.0,f:0.0,units:{个:100}},
+{name:"布丁奶茶",kcal:380,p:3.0,c:58.0,f:13.0,units:{杯:500}},
+{name:"珍珠奶茶",kcal:350,p:2.5,c:55.0,f:12.0,units:{杯:500}},
+{name:"椰果奶茶",kcal:330,p:2.5,c:50.0,f:12.0,units:{杯:500}},
+{name:"奶盖茶",kcal:280,p:3.0,c:35.0,f:14.0,units:{杯:500}},
+{name:"杨枝甘露",kcal:180,p:2.0,c:32.0,f:5.0,units:{杯:300}},
+{name:"双皮奶",kcal:120,p:4.0,c:15.0,f:4.5,units:{碗:150}},
+{name:"龟苓膏",kcal:60,p:1.5,c:12.0,f:0.5,units:{碗:150}},
+{name:"仙草冻",kcal:45,p:0.5,c:10.0,f:0.0,units:{碗:150}},
+{name:"芋圆",kcal:180,p:2.0,c:38.0,f:2.0,units:{份:150}},
+{name:"烧仙草",kcal:120,p:2.0,c:22.0,f:3.0,units:{碗:250}},
+{name:"刨冰",kcal:110,p:1.0,c:25.0,f:0.5,units:{碗:200}},
+{name:"果汁冰沙",kcal:90,p:0.5,c:22.0,f:0.2,units:{杯:300}},
+{name:"奶昔",kcal:220,p:5.0,c:30.0,f:8.0,units:{杯:300}},
+{name:"蛋白粉",kcal:378,p:80.0,c:6.0,f:5.0,units:{勺:30}},
+{name:"肌酸",kcal:0,p:0.0,c:0.0,f:0.0,units:{勺:5}},
+{name:"BCAA",kcal:20,p:5.0,c:0.0,f:0.0,units:{勺:10}},
+{name:"维生素片",kcal:5,p:0.0,c:1.0,f:0.0,units:{片:2}},
+{name:"钙片",kcal:8,p:0.0,c:2.0,f:0.0,units:{片:2}},
+{name:"鱼油",kcal:9,p:0.0,c:0.0,f:1.0,units:{粒:1}},
+{name:"坚果棒",kcal:480,p:15.0,c:35.0,f:30.0,units:{根:40}},
+{name:"能量棒",kcal:420,p:12.0,c:50.0,f:18.0,units:{根:40}},
+{name:"代餐粉",kcal:380,p:25.0,c:45.0,f:8.0,units:{袋:50}},
+{name:"代餐奶昔",kcal:220,p:15.0,c:25.0,f:6.0,units:{瓶:300}},
+{name:"全麦饼干",kcal:430,p:10.0,c:60.0,f:16.0,units:{片:20}},
+{name:"苏打饼干",kcal:420,p:8.0,c:65.0,f:14.0,units:{片:15}},
+{name:"威化饼干",kcal:520,p:6.0,c:58.0,f:28.0,units:{块:20}},
+{name:"曲奇",kcal:520,p:6.0,c:58.0,f:28.0,units:{块:15}},
+{name:"马卡龙",kcal:450,p:5.5,c:55.0,f:22.0,units:{个:15}},
+{name:"泡芙",kcal:360,p:5.0,c:32.0,f:24.0,units:{个:30}},
+{name:"慕斯",kcal:320,p:4.5,c:28.0,f:22.0,units:{份:100}},
+{name:"芝士蛋糕",kcal:350,p:6.0,c:28.0,f:24.0,units:{块:100}},
+{name:"提拉米苏",kcal:380,p:5.5,c:30.0,f:26.0,units:{份:100}},
+{name:"黑森林",kcal:360,p:5.0,c:32.0,f:24.0,units:{块:100}},
+{name:"铜锣烧",kcal:310,p:5.0,c:48.0,f:10.0,units:{个:60}},
+{name:"可颂",kcal:406,p:8.2,c:45.8,f:21.0,units:{个:60}},
+{name:"贝果",kcal:250,p:9.0,c:48.0,f:1.5,units:{个:90}},
+{name:"法棍",kcal:274,p:9.0,c:54.0,f:1.5,units:{片:30}},
+{name:" Bagel",kcal:250,p:9.0,c:48.0,f:1.5,units:{个:90}},
+{name:"燕麦棒",kcal:450,p:10.0,c:55.0,f:20.0,units:{根:35}},
+{name:"黑巧克力",kcal:546,p:4.9,c:61.0,f:31.3,units:{块:20}},
+{name:"白巧克力",kcal:539,p:5.9,c:59.2,f:32.1,units:{块:20}},
+{name:"牛奶巧克力",kcal:535,p:7.6,c:59.4,f:29.7,units:{块:20}},
+{name:"麦丽素",kcal:500,p:6.0,c:60.0,f:25.0,units:{颗:5}},
+{name:"费列罗",kcal:580,p:7.5,c:44.0,f:42.0,units:{颗:12}},
+{name:"士力架",kcal:488,p:8.5,c:56.0,f:25.0,units:{根:50}},
+{name:"德芙",kcal:542,p:6.0,c:57.0,f:32.0,units:{块:15}},
+{name:"M豆",kcal:480,p:4.0,c:70.0,f:20.0,units:{包:45}},
+{name:"彩虹糖",kcal:400,p:0.0,c:90.0,f:4.0,units:{包:40}},
+{name:"口香糖",kcal:10,p:0.0,c:2.0,f:0.0,units:{片:3}},
+{name:"润喉糖",kcal:15,p:0.0,c:3.5,f:0.0,units:{颗:3}},
+{name:"燕窝",kcal:30,p:4.5,c:1.5,f:0.0,units:{碗:100}},
+{name:"花胶",kcal:80,p:15.0,c:2.0,f:1.5,units:{份:50}},
+{name:"虫草",kcal:35,p:5.0,c:5.0,f:0.5,units:{根:3}},
+{name:"人参",kcal:30,p:3.0,c:5.0,f:0.5,units:{片:5}},
+{name:"枸杞红枣茶",kcal:45,p:1.0,c:10.0,f:0.2,units:{杯:250}},
+{name:"菊花茶",kcal:2,p:0.1,c:0.5,f:0.0,units:{杯:250}},
+{name:"普洱茶",kcal:1,p:0.0,c:0.2,f:0.0,units:{杯:250}},
+{name:"铁观音",kcal:1,p:0.1,c:0.2,f:0.0,units:{杯:250}},
+{name:"茉莉花茶",kcal:1,p:0.1,c:0.2,f:0.0,units:{杯:250}},
+{name:"玫瑰花茶",kcal:2,p:0.1,c:0.5,f:0.0,units:{杯:250}},
+{name:"柠檬水",kcal:10,p:0.1,c:2.5,f:0.0,units:{杯:250}},
+{name:"蜂蜜水",kcal:30,p:0.1,c:8.0,f:0.0,units:{杯:250}},
+{name:"姜茶",kcal:15,p:0.2,c:3.5,f:0.1,units:{杯:250}},
+{name:"红糖姜茶",kcal:45,p:0.3,c:11.0,f:0.1,units:{杯:250}},
+{name:"豆浆(无糖)",kcal:25,p:2.5,c:1.0,f:1.0,units:{杯:250}},
+{name:"豆奶",kcal:45,p:3.5,c:4.5,f:1.5,units:{杯:250}},
+{name:"杏仁奶",kcal:24,p:0.4,c:1.0,f:2.2,units:{杯:250}},
+{name:"燕麦奶",kcal:48,p:1.0,c:8.5,f:1.5,units:{杯:250}},
+{name:"椰奶",kcal:230,p:2.3,c:2.3,f:23.8,units:{杯:250}},
+{name:"脱脂牛奶",kcal:35,p:3.4,c:5.0,f:0.1,units:{杯:250}},
+{name:"低脂牛奶",kcal:45,p:3.4,c:4.8,f:1.5,units:{杯:250}},
+{name:"高钙奶",kcal:55,p:3.0,c:5.5,f:2.5,units:{杯:250}},
+{name:"养乐多",kcal:70,p:1.2,c:15.0,f:0.1,units:{瓶:100}},
+{name:"AD钙奶",kcal:55,p:2.0,c:9.0,f:1.5,units:{瓶:220}},
+{name:"旺仔牛奶",kcal:65,p:2.5,c:9.5,f:2.0,units:{罐:245}},
+{name:"豆本豆",kcal:55,p:3.0,c:6.5,f:1.5,units:{盒:250}},
+{name:"维他奶",kcal:52,p:2.6,c:6.0,f:2.0,units:{盒:250}},
+{name:"杏仁露",kcal:45,p:1.5,c:6.5,f:1.5,units:{罐:240}},
+{name:"六个核桃",kcal:55,p:1.5,c:7.0,f:2.5,units:{罐:240}},
+{name:"椰树椰汁",kcal:48,p:0.5,c:7.5,f:2.0,units:{罐:245}},
+{name:"王老吉",kcal:40,p:0.0,c:10.0,f:0.0,units:{罐:310}},
+{name:"加多宝",kcal:40,p:0.0,c:10.0,f:0.0,units:{罐:310}},
+{name:"红牛",kcal:46,p:0.3,c:11.0,f:0.0,units:{罐:250}},
+{name:"东鹏特饮",kcal:45,p:0.0,c:11.0,f:0.0,units:{罐:250}},
+{name:"脉动",kcal:25,p:0.0,c:6.0,f:0.0,units:{瓶:600}},
+{name:"宝矿力",kcal:26,p:0.0,c:6.5,f:0.0,units:{瓶:500}},
+{name:"尖叫",kcal:25,p:0.0,c:6.0,f:0.0,units:{瓶:550}},
+{name:"元气森林",kcal:0,p:0.0,c:0.0,f:0.0,units:{瓶:480}},
+{name:"气泡水",kcal:0,p:0.0,c:0.0,f:0.0,units:{瓶:500}},
+{name:"苏打水",kcal:0,p:0.0,c:0.0,f:0.0,units:{瓶:500}},
+{name:"矿泉水",kcal:0,p:0.0,c:0.0,f:0.0,units:{瓶:500}},
+{name:"椰子水",kcal:19,p:0.7,c:3.7,f:0.2,units:{杯:250}},
+{name:"酸梅汤",kcal:35,p:0.2,c:8.5,f:0.0,units:{杯:250}},
+{name:"冰糖雪梨",kcal:45,p:0.0,c:11.0,f:0.0,units:{杯:250}},
+{name:"金银花露",kcal:30,p:0.0,c:7.5,f:0.0,units:{瓶:340}},
+{name:"冬瓜茶",kcal:25,p:0.0,c:6.0,f:0.0,units:{杯:250}},
+{name:"仙草蜜",kcal:50,p:0.2,c:12.0,f:0.0,units:{杯:250}},
+{name:"薏米水",kcal:15,p:0.3,c:3.5,f:0.0,units:{杯:250}},
+{name:"红豆水",kcal:25,p:0.8,c:5.5,f:0.0,units:{杯:250}},
+{name:"绿豆汤(无糖)",kcal:45,p:2.5,c:8.5,f:0.3,units:{碗:250}},
+{name:"银耳汤(无糖)",kcal:35,p:1.0,c:7.5,f:0.2,units:{碗:250}},
+{name:"藕粉(无糖)",kcal:350,p:0.2,c:87.0,f:0.1,units:{碗:30}},
+{name:"黑芝麻糊(无糖)",kcal:400,p:10.0,c:55.0,f:15.0,units:{碗:40}},
+{name:"核桃粉",kcal:430,p:12.0,c:45.0,f:22.0,units:{勺:30}},
+{name:"藕粉桂花羹",kcal:90,p:1.0,c:20.0,f:0.5,units:{碗:200}},
+{name:"桂花糕",kcal:280,p:3.5,c:55.0,f:5.5,units:{块:50}},
+{name:"驴打滚",kcal:250,p:5.0,c:45.0,f:5.5,units:{个:80}},
+{name:"艾窝窝",kcal:220,p:4.0,c:42.0,f:4.0,units:{个:50}},
+{name:"豌豆黄",kcal:180,p:4.5,c:35.0,f:2.5,units:{块:50}},
+{name:"芸豆卷",kcal:210,p:5.0,c:38.0,f:4.0,units:{个:50}},
+{name:"山楂糕",kcal:220,p:1.0,c:50.0,f:0.5,units:{块:50}},
+{name:"绿豆饼",kcal:340,p:6.0,c:55.0,f:10.0,units:{个:50}},
+{name:"老婆饼",kcal:380,p:5.5,c:50.0,f:17.0,units:{个:50}},
+{name:"肉松饼",kcal:420,p:10.0,c:50.0,f:20.0,units:{个:50}},
+{name:"蛋黄派",kcal:380,p:5.0,c:48.0,f:18.0,units:{个:50}},
+{name:"瑞士卷",kcal:340,p:5.5,c:42.0,f:17.0,units:{个:60}},
+{name:"虎皮蛋糕",kcal:350,p:6.0,c:40.0,f:19.0,units:{块:80}},
+{name:"奶油面包",kcal:320,p:7.0,c:45.0,f:12.0,units:{个:80}},
+{name:"菠萝包",kcal:340,p:7.0,c:48.0,f:13.0,units:{个:80}},
+{name:"叉烧包",kcal:230,p:7.5,c:35.0,f:6.5,units:{个:80}},
+{name:"奶黄包",kcal:240,p:6.0,c:38.0,f:7.0,units:{个:80}},
+{name:"流沙包",kcal:250,p:5.5,c:35.0,f:9.0,units:{个:80}},
+{name:"莲蓉包",kcal:260,p:5.0,c:40.0,f:9.0,units:{个:80}},
+{name:"豆沙包",kcal:245,p:6.0,c:42.0,f:5.5,units:{个:80}},
+{name:"菜包",kcal:180,p:5.5,c:32.0,f:3.5,units:{个:80}},
+{name:"肉包",kcal:220,p:8.0,c:32.0,f:6.5,units:{个:80}},
+{name:"灌汤包",kcal:200,p:7.0,c:28.0,f:6.5,units:{个:40}},
+{name:"蟹黄包",kcal:220,p:8.5,c:28.0,f:8.0,units:{个:40}},
+{name:"汤包",kcal:190,p:6.5,c:26.0,f:6.0,units:{个:35}},
+{name:"锅贴",kcal:220,p:7.0,c:28.0,f:8.5,units:{个:30}},
+{name:"煎饺",kcal:230,p:7.5,c:26.0,f:10.0,units:{个:30}},
+{name:"蒸饺",kcal:180,p:6.0,c:26.0,f:6.0,units:{个:25}},
+{name:"水饺",kcal:190,p:6.5,c:26.0,f:6.5,units:{个:25}},
+{name:"抄手",kcal:200,p:7.0,c:25.0,f:7.5,units:{个:30}},
+{name:"云吞",kcal:185,p:6.5,c:24.0,f:6.5,units:{个:25}},
+{name:"馄饨面",kcal:165,p:7.0,c:26.0,f:4.0,units:{碗:350}},
+{name:"牛腩面",kcal:210,p:10.0,c:28.0,f:7.0,units:{碗:400}},
+{name:"猪手面",kcal:220,p:9.0,c:28.0,f:8.0,units:{碗:400}},
+{name:"肉丝面",kcal:175,p:8.0,c:27.0,f:5.0,units:{碗:350}},
+{name:"鸡蛋面",kcal:160,p:7.0,c:26.0,f:4.0,units:{碗:350}},
+{name:"蔬菜面",kcal:140,p:5.0,c:26.0,f:2.5,units:{碗:350}},
+{name:"刀削面",kcal:170,p:6.5,c:28.0,f:4.5,units:{碗:350}},
+{name:"油泼面",kcal:220,p:7.0,c:32.0,f:7.5,units:{碗:350}},
+{name:"臊子面",kcal:185,p:8.0,c:27.0,f:5.5,units:{碗:350}},
+{name:"biangbiang面",kcal:210,p:7.5,c:32.0,f:6.0,units:{碗:400}},
+{name:"热干面",kcal:210,p:7.0,c:35.0,f:5.5,units:{份:300}},
+{name:"凉面(麻酱)",kcal:240,p:7.5,c:30.0,f:10.0,units:{份:250}},
+{name:"葱油拌面",kcal:280,p:6.5,c:32.0,f:14.0,units:{份:250}},
+{name:"炸酱面(家常)",kcal:220,p:9.0,c:30.0,f:7.0,units:{碗:350}},
+{name:"打卤面",kcal:185,p:8.0,c:27.0,f:5.0,units:{碗:350}},
+{name:"阳春面",kcal:140,p:5.0,c:25.0,f:3.0,units:{碗:300}},
+{name:"荞麦面",kcal:130,p:5.0,c:25.0,f:1.5,units:{碗:300}},
+{name:"魔芋面",kcal:15,p:0.2,c:3.0,f:0.1,units:{碗:200}},
+{name:"粉丝",kcal:140,p:0.8,c:33.0,f:0.3,units:{份:100}},
+{name:"粉条",kcal:140,p:0.5,c:33.0,f:0.2,units:{份:100}},
+{name:"红薯粉",kcal:140,p:0.5,c:33.0,f:0.2,units:{份:100}},
+{name:"土豆粉",kcal:140,p:1.0,c:32.0,f:0.5,units:{份:100}},
+{name:"年糕片",kcal:154,p:3.3,c:34.7,f:0.6,units:{份:100}},
+{name:"糯米",kcal:348,p:7.3,c:78.3,f:1.0,units:{碗:150}},
+{name:"紫米",kcal:346,p:8.3,c:75.0,f:1.7,units:{碗:150}},
+{name:"糙米",kcal:348,p:7.9,c:76.5,f:2.9,units:{碗:150}},
+{name:"藜麦",kcal:368,p:14.1,c:64.2,f:6.1,units:{碗:150}},
+{name:"小米",kcal:361,p:9.0,c:75.1,f:3.1,units:{碗:150}},
+{name:"红豆",kcal:324,p:20.2,c:63.4,f:0.6,units:{碗:150}},
+{name:"绿豆",kcal:316,p:21.6,c:62.0,f:0.8,units:{碗:150}},
+{name:"黑豆",kcal:381,p:36.0,c:33.6,f:15.9,units:{碗:150}},
+{name:"黄豆",kcal:390,p:35.1,c:34.2,f:16.0,units:{碗:150}},
+{name:"鹰嘴豆",kcal:364,p:19.3,c:60.7,f:6.0,units:{碗:150}},
+{name:"蚕豆",kcal:338,p:27.0,c:58.0,f:1.4,units:{碗:150}},
+{name:"毛豆",kcal:131,p:13.1,c:10.5,f:5.0,units:{份:100}},
+{name:"豌豆",kcal:81,p:5.4,c:14.5,f:0.4,units:{份:100}},
+{name:"荷兰豆",kcal:27,p:2.5,c:4.9,f:0.3,units:{份:100}},
+{name:"四季豆",kcal:31,p:1.8,c:7.0,f:0.1,units:{份:100}},
+{name:"豇豆",kcal:33,p:2.9,c:6.9,f:0.3,units:{份:100}},
+{name:"扁豆",kcal:116,p:25.3,c:60.1,f:1.1,units:{份:100}},
+{name:"芸豆",kcal:118,p:21.5,c:61.3,f:0.9,units:{份:100}},
+{name:"刀豆",kcal:35,p:2.6,c:6.8,f:0.2,units:{份:100}},
+{name:"秋葵",kcal:33,p:2.0,c:7.5,f:0.1,units:{份:100}},
+{name:"芦笋",kcal:20,p:2.2,c:3.9,f:0.1,units:{份:100}},
+{name:"竹笋",kcal:25,p:2.6,c:3.6,f:0.2,units:{份:100}},
+{name:"莴笋",kcal:15,p:1.0,c:2.8,f:0.1,units:{份:100}},
+{name:"茭白",kcal:26,p:1.2,c:5.9,f:0.2,units:{份:100}},
+{name:"荸荠",kcal:61,p:1.2,c:14.2,f:0.2,units:{份:100}},
+{name:"莲藕",kcal:47,p:1.2,c:11.5,f:0.2,units:{份:100}},
+{name:"山药",kcal:57,p:1.9,c:12.4,f:0.2,units:{份:100}},
+{name:"芋头",kcal:56,p:1.3,c:12.7,f:0.2,units:{份:100}},
+{name:"百合",kcal:162,p:3.2,c:38.8,f:0.1,units:{份:100}},
+{name:"莲子",kcal:332,p:17.2,c:64.5,f:2.0,units:{份:100}},
+{name:"芡实",kcal:351,p:8.3,c:78.7,f:0.3,units:{份:100}},
+{name:"薏米",kcal:357,p:12.8,c:71.1,f:3.3,units:{份:100}},
+{name:"黑芝麻",kcal:559,p:19.1,c:24.0,f:46.1,units:{勺:15}},
+{name:"白芝麻",kcal:573,p:17.7,c:23.4,f:49.7,units:{勺:15}},
+{name:"面粉",kcal:364,p:10.3,c:76.3,f:1.0,units:{勺:30}},
+{name:"淀粉",kcal:346,p:0.3,c:86.0,f:0.1,units:{勺:15}},
+{name:"糯米粉",kcal:360,p:7.3,c:78.5,f:1.0,units:{勺:30}},
+{name:"粘米粉",kcal:355,p:7.0,c:78.0,f:0.8,units:{勺:30}},
+{name:"澄粉",kcal:350,p:0.5,c:86.0,f:0.2,units:{勺:30}},
+{name:"玉米淀粉",kcal:381,p:0.3,c:91.0,f:0.1,units:{勺:15}},
+{name:"泡打粉",kcal:0,p:0.0,c:0.0,f:0.0,units:{勺:5}},
+{name:"酵母",kcal:0,p:0.0,c:0.0,f:0.0,units:{勺:5}}];
+
+function searchFood(q){if(!q)return[];q=q.trim();if(!q)return[];const low=q.toLowerCase();return FOOD_DB.filter(f=>f.name.indexOf(q)>=0||f.name.toLowerCase().indexOf(low)>=0).slice(0,8);}
+function calcFood(f,amount,unit){
+  if(!f)return null;
+  const grams=(unit==="克"||unit==="g")?amount:(unit==="两")?amount*50:(unit==="份")?(f.units&&f.units.份?f.units.份:100)*amount:(unit==="个")?(f.units&&f.units.个?f.units.个:100)*amount:(unit==="碗")?(f.units&&f.units.碗?f.units.碗:100)*amount:(unit==="杯")?(f.units&&f.units.杯?f.units.杯:100)*amount:(unit=="根")?(f.units&&f.units.根?f.units.根:100)*amount:(unit=="块")?(f.units&&f.units.块?f.units.块:100)*amount:(unit=="片")?(f.units&&f.units.片?f.units.片:100)*amount:(unit=="串")?(f.units&&f.units.串?f.units.串:100)*amount:(unit=="颗")?(f.units&&f.units.颗?f.units.颗:100)*amount:(unit=="包")?(f.units&&f.units.包?f.units.包:100)*amount:(unit=="罐")?(f.units&&f.units.罐?f.units.罐:100)*amount:(unit=="瓶")?(f.units&&f.units.瓶?f.units.瓶:100)*amount:(unit=="盒")?(f.units&&f.units.盒?f.units.盒:100)*amount:(unit=="勺")?(f.units&&f.units.勺?f.units.勺:100)*amount:(unit=="把")?(f.units&&f.units.把?f.units.把:100)*amount:amount;
+  const ratio=grams/100;
+  return{kcal:Math.round(f.kcal*ratio),p:Math.round(f.p*ratio*10)/10,c:Math.round(f.c*ratio*10)/10,f:Math.round(f.f*ratio*10)/10,grams};
+}
+function defaultUnit(f){if(!f||!f.units)return"克";const units=Object.keys(f.units);return units.length?units[0]:"克";}
 
 /* ================= 存储：本地“资料库”多表 ================= */
 const P="flt_";
@@ -588,7 +1128,6 @@ function openOnboarding(force){const o=curOwner();const p=force?null:profile(o);
   <label class="f">每日热量缺口 <span class="note">（500–750 kcal，约每周减 ${round(((p?+p.deficit:600)*7/7700),2)||0.55} kg 的节奏）</span></label>
   <input class="in" type="range" id="obDef" min="500" max="750" step="25" value="${p?p.deficit:600}" style="padding:0;background:transparent">
   <div style="display:flex;justify-content:space-between" class="note"><span>缺口</span><b id="obDefV" style="color:var(--terra)"></b></div>
-  ${force?"":"<label class='f' style='display:flex;align-items:center;gap:8px'><input type='checkbox' id='obSeed' checked> 首次使用，载入示例数据体验</label>"}
   <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px"><button class="btn ghost" onclick="closeOnb()">取消</button><button class="btn acc" onclick="saveProfile()">保存档案</button></div>`;
   m.classList.add("on");const r=$("obDef");const upd=()=>$("obDefV").textContent=r.value+" kcal";r.oninput=upd;upd();
 }
@@ -602,7 +1141,7 @@ window.saveProfile=function(){
   upRec(rec);
   const i=T.profiles.findIndex(x=>x.id===rec.id);if(i>=0)T.profiles[i]=rec;else T.profiles.push(rec);
   saveT("profiles");ss({owner:name});$("modalMask").classList.remove("on");
-  if(!prev&&$("obSeed")&&$("obSeed").checked)seedAll();
+  // 不再自动载入示例数据
   rHeader();memberOptions();showView("overview");toast(`欢迎，${name}！档案已保存`);
   // 建档完成后自动同步一次（只拉取/推送自己的数据）
   setTimeout(()=>{const autoSync=gs().ghAuto!==false;if(autoSync)syncNow(false);},600);
@@ -682,7 +1221,7 @@ function rOverview(){
   rHeader();memberOptions();const o=curOwner(),p=profile(o),lb=latestBody(o);
   const qd=$("qDate");if(qd&&!qd.value)qd.value=today();
   const cards=$("ovCards");cards.innerHTML="";
-  if(!p||!lb){cards.innerHTML=`<div class="card" style="grid-column:1/-1"><div class="empty">还没有身体数据。<br><br><button class="btn" onclick="openOnboarding(false)">建立个人档案</button> <button class="btn acc" onclick="seedBody()">直接载入示例身体数据</button></div></div>`;rAdvice();chartCanvas("cOv",30);return;}
+  if(!p||!lb){cards.innerHTML=`<div class="card" style="grid-column:1/-1"><div class="empty">还没有身体数据。<br><br><button class="btn" onclick="openOnboarding(false)">建立个人档案</button></div></div>`;rAdvice();chartCanvas("cOv",30);return;}
   const c=calc(p,lb.kg);
   const startKg=p.startKg,delta=round(startKg-lb.kg,1);
   const prog=clamp((startKg-lb.kg)/(startKg-p.goalKg)*100,0,100);
@@ -749,11 +1288,69 @@ window.clearTab=async function(k){
 window.seedBody=function(){if(!profile(curOwner())){toast("请先建立个人档案","err");openOnboarding(false);return;}seedBodyData();toast("已填入约 11 周示例身体数据");rBody();rOverview();};
 
 /* ================= 饮食 ================= */
-window.addMeal=function(){
+window._mealItems=[];
+window.foodSuggest=function(){
+  const el=$("mFoodName"),drop=$("mFoodDrop");if(!el||!drop)return;
+  const q=el.value.trim();if(!q){drop.style.display="none";return;}
+  const items=searchFood(q);
+  if(!items.length){drop.style.display="none";return;}
+  drop.innerHTML=items.map(f=>`<div class="food-sug" data-name="${esc(f.name)}" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center" onmousedown="pickFood('${esc(f.name)}')">
+    <span style="font-weight:600">${esc(f.name)}</span><span class="note">${f.kcal} kcal/100g</span></div>`).join("");
+  drop.style.display="block";
+  drop.querySelectorAll(".food-sug").forEach(div=>{div.onmousedown=function(){pickFood(div.dataset.name);};});
+};
+window.pickFood=function(name){
+  const f=FOOD_DB.find(x=>x.name===name);if(!f)return;
+  $("mFoodName").value=name;const drop=$("mFoodDrop");if(drop)drop.style.display="none";
+  const u=defaultUnit(f);if(u){$("mFoodUnit").value=u;}
+  previewFoodCalc();
+};
+window.previewFoodCalc=function(){
+  const name=$("mFoodName").value.trim();const f=FOOD_DB.find(x=>x.name===name);const el=$("mFoodCalc");
+  if(!f||!el)return;
+  const amt=parseFloat($("mFoodAmt").value)||1;const unit=$("mFoodUnit").value;
+  const c=calcFood(f,amt,unit);if(!c)return;
+  el.innerHTML=`≈ ${c.kcal} kcal · 蛋白 ${c.p}g · 碳水 ${c.c}g · 脂肪 ${c.f}g（${c.grams}g）`;
+};
+window.addFoodItem=function(){
+  const name=$("mFoodName").value.trim();const f=FOOD_DB.find(x=>x.name===name);
+  if(!f){toast("请从列表选择一种食物","err");return;}
+  const amt=parseFloat($("mFoodAmt").value);if(!(amt>0)){toast("请填写数量","err");return;}
+  const unit=$("mFoodUnit").value;const c=calcFood(f,amt,unit);
+  window._mealItems.push({name:f.name,amount:amt,unit,calculated:c,grams:c.grams});
+  $("mFoodName").value="";$("mFoodAmt").value="1";$("mFoodCalc").textContent="";
+  const drop=$("mFoodDrop");if(drop)drop.style.display="none";
+  renderFoodItems();
+};
+window.delFoodItem=function(i){window._mealItems.splice(i,1);renderFoodItems();};
+window.clearFoodItems=function(){window._mealItems=[];renderFoodItems();};
+function renderFoodItems(){
+  const el=$("mFoodList");if(!el)return;
+  if(!window._mealItems.length){el.innerHTML="";return;}
+  const tot=window._mealItems.reduce((s,it)=>{const c=it.calculated;return{kcal:s.kcal+c.kcal,p:s.p+c.p,c:s.c+c.c,f:s.f+c.f};},{kcal:0,p:0,c:0,f:0});
+  el.innerHTML=`<div style="background:var(--paper2);border-radius:10px;padding:10px 12px;border:1px solid var(--line)">
+    ${window._mealItems.map((it,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line2)">
+      <span>${esc(it.name)} ${it.amount}${it.unit} <span class="note">≈ ${it.calculated.kcal} kcal</span></span>
+      <button class="x" onclick="delFoodItem(${i})" style="margin-left:8px">✕</button></div>`).join("")}
+    <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line);font-weight:700;color:var(--forest2)">
+      合计：${Math.round(tot.kcal)} kcal · 蛋白 ${Math.round(tot.p*10)/10}g · 碳水 ${Math.round(tot.c*10)/10}g · 脂肪 ${Math.round(tot.f*10)/10}g
+    </div></div>`;
+}
+window.saveMeal=function(){
+  const o=curOwner();const d=$("mDate").value||today();const meal=$("mMeal").value;
+  if(!window._mealItems.length){toast("请先添加至少一种食物","err");return;}
+  window._mealItems.forEach(it=>{
+    const c=it.calculated;
+    const rec={id:uid(),owner:o,date:d,meal,kcal:c.kcal,protein:c.p,carbs:c.c,fat:c.f,note:`${it.name} ${it.amount}${it.unit}`,createdAt:now()};upRec(rec);
+    T.meals.push(rec);
+  });
+  saveT("meals");window._mealItems=[];renderFoodItems();toast(`已保存 ${$("mMeal").value}`);rMeals();rOverview();
+};
+window.addMealManual=function(){
   const o=curOwner();const d=$("mDate").value||today();const kcal=parseFloat($("mKcal").value);
   if(!(kcal>0)){toast("请填写热量","err");return;}
   const rec={id:uid(),owner:o,date:d,meal:$("mMeal").value,kcal,protein:parseFloat($("mP").value)||null,carbs:parseFloat($("mC").value)||null,fat:parseFloat($("mF").value)||null,note:$("mNote").value.trim(),createdAt:now()};upRec(rec);
-  T.meals.push(rec);saveT("meals");$("mKcal").value="";$("mP").value="";$("mC").value="";$("mF").value="";$("mNote").value="";toast("已记录");rMeals();rOverview();
+  T.meals.push(rec);saveT("meals");$("mKcal").value="";$("mP").value="";$("mC").value="";$("mF").value="";$("mNote").value="";toast("已记录（手动）");rMeals();rOverview();
 };
 function rMeals(){
   const o=curOwner(),p=profile(o),lb=latestBody(o);if(!$("mDate").value)$("mDate").value=today();
@@ -772,7 +1369,7 @@ function rMeals(){
     st.innerHTML=`按缺口 ${c.def} kcal 估算：目标摄入 <b>${c.cal} kcal/日</b>（TDEE ${Math.round(c.tdee)}），约每周减 ${c.weeklyKg} kg。蛋白质吃到 <b>${c.Pg} g</b>（约 ${p.sex==="男"?"1.8":"1.6"} g/kg）利于保留肌肉；碳水 ${c.Cg} g、脂肪 ${c.Fg} g 供参考，实际可随训练日浮动。`;
   }
   $("mDateTag").textContent=d;
-  $("mList").innerHTML=rows.length?`<ul class="list">${rows.map(r=>`<li><div style="flex:1"><b>${r.meal}</b> · ${esc(r.note||"—")}<div class="note">${r.kcal} kcal${r.protein!=null?` · 蛋白${r.protein} 碳${r.carbs} 脂${r.fat}`:""}</div></div><button class="x" onclick="delRow('meals','${r.id}')">✕</button></li>`).join("")}</ul>`:'<div class="empty">当日无记录</div>';
+  $("mList").innerHTML=rows.length?`<ul class="list">${rows.map(r=>`<li><div style="flex:1"><b>${r.meal}</b> · ${esc(r.note||"—")}<div class="note">${r.kcal} kcal${r.protein!=null?` · 蛋白${r.protein}g 碳${r.carbs}g 脂${r.fat}g`:""}</div></div><button class="x" onclick="delRow('meals','${r.id}')">✕</button></li>`).join("")}</ul>`:'<div class="empty">当日无记录</div>';
   /* 14日图 */
   const days=[];for(let i=13;i>=0;i--)days.push(addDays(today(),-i));
   const daily=days.map(dd=>({d:dd,k:round(T.meals.filter(x=>x.owner===o&&x.date===dd).reduce((s,x)=>s+(+x.kcal||0),0),0)}));
