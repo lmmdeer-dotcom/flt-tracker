@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tadashi健身加油">
-<link rel="manifest" href="./manifest.json?v=1.8">
-    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.8">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.8">
+<link rel="manifest" href="./manifest.json?v=1.9">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9">
 <title>Tadashi健身加油！</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -212,11 +212,11 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
   </header>
 
   <div class="greet" style="padding-top:14px">
+    <h1 id="greetTitle"></h1>
     <div class="sub" id="greetSub"></div>
     <div class="member-line">
       <span class="note">当前成员</span>
       <select id="memberSel" onchange="onMemberChange()"></select>
-      <span class="note" id="ownerHint"></span>
     </div>
   </div>
 
@@ -514,7 +514,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
       </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.8.0（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.9.0（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 <div class="pwa-tip" id="pwaTip">
@@ -1529,12 +1529,11 @@ function memberOptions(){const names=ownerNames();const sel=$("memberSel");if(!s
 function rHeader(){
   const names=ownerNames();if(!names.length){/* 等待 onboarding */return;}
   let o=curOwner();if(!o||!names.includes(o)){o=names[0];ss({owner:o});}
-  const p=profile(o),lb=latestBody(o);
+  const p=profile(o);
+  const t=$("greetTitle");if(t)t.innerHTML=p?`Hello, <span class="num-inline">${esc(p.name||o)}</span>`:"";
   const wd=WD0[new Date().getDay()];
-  let sub=`今天是 ${today()} · ${wd} · 开启第 ${Math.max(1,Math.floor((now()- (p&&p.startAt?p.startAt:now()))/864e5)+1)} 天`;
-  if(p&&lb)sub+=` · 当前 ${lb.kg} kg（${p.goalKg?"目标 "+p.goalKg+" kg · 已减 "+round(p.startKg-lb.kg,1)+" kg":"目标未设"}）`;
-  $("greetSub").innerHTML=sub;
-  const hint=$("ownerHint");hint.innerHTML=p?`<span class="pill g">${esc(p.sex||"")} · ${esc(String(p.age||""))}岁 · ${esc(String(p.height||""))}cm</span>`:"";
+  const days=Math.max(1,Math.floor((now()-(p&&p.startAt?p.startAt:now()))/864e5)+1);
+  $("greetSub").innerHTML=`今天是 ${today()} · ${wd}<br><em>这是你记录的第 ${days} 天</em>`;
 }
 function openOnboarding(force){const o=curOwner();const p=force?null:profile(o);const m=$("modalMask"),b=$("modalBox");
   b.innerHTML=`<h2>${force?"添加新成员":"建立你的档案"}</h2>
@@ -2140,8 +2139,13 @@ window.togAuto=function(){ss({ghAuto:(gs().ghAuto===false)?true:false});applySet
 window.togPushAuto=function(){ss({ghPushAuto:(gs().ghPushAuto===false)?true:false});applySettings();};
 function rSettings(){const o=curOwner(),p=profile(o);
   const admin=isAdmin(o);
-  $("sProfile").innerHTML=p?`<div class="set-row"><div class="l"><b>${esc(p.name)}</b><span><span class="pill ${admin?'g':'y'}">${admin?'管理员':'成员'}</span> ${p.sex} · ${p.age}岁 · ${p.height}cm · 活动 ${["","久坐","轻度","中度","高度","极高"][[1.2,1.375,1.55,1.725,1.9].indexOf(+p.activity)+1]||"中度"} · 缺口 ${p.deficit} kcal</span></div>
+  const actTxt=["","久坐","轻度","中度","高度","极高"][[1.2,1.375,1.55,1.725,1.9].indexOf(+p?.activity)+1]||"—";
+  $("sProfile").innerHTML=p?`<div class="set-row"><div class="l"><b>个人档案</b><span>当前成员的基础信息与目标</span></div>
     <button class="btn ghost mini" onclick="openOnboarding(false)">编辑档案</button></div>
+    <div class="set-row"><div class="l"><b>基本信息</b><span>${esc(p.sex||"—")} · ${p.age||"—"} 岁 · ${p.height||"—"} cm</span></div></div>
+    <div class="set-row"><div class="l"><b>体重区间</b><span>${p.startKg||"—"} kg → ${p.goalKg||"—"} kg</span></div></div>
+    <div class="set-row"><div class="l"><b>活动水平</b><span>${actTxt} · 缺口 ${p.deficit||"—"} kcal</span></div></div>
+    <div class="set-row"><div class="l"><b>记录起点</b><span>${p.startAt?dstr(new Date(p.startAt)):today()}</span></div></div>
     ${admin?`<div class="set-row"><div class="l"><b>新增团队成员</b><span>为同事建立独立档案，数据按成员分开</span></div>
     <button class="btn acc mini" onclick="addMemberBtn()">＋ 添加成员</button></div>`:''}
     ${admin?`<div class="set-row"><div class="l"><b>成员角色管理</b><span>提升其他成员为管理员，使其也能看到完整设置与云端面板</span></div>
