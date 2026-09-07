@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tadashi健身加油">
-<link rel="manifest" href="./manifest.json?v=1.9">
-    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9">
+<link rel="manifest" href="./manifest.json?v=1.9.1">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.1">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.1">
 <title>Tadashi健身加油！</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -78,7 +78,7 @@ section.view.on{display:block}
   .tr-row{flex-wrap:wrap;gap:6px}
   .tr-row .tr-day{width:30px;font-size:10.5px;font-weight:400;letter-spacing:.05em;padding:2px 2px}
   .tr-row .tr-input{width:100%;flex:auto;order:2}
-  .tr-row .tr-kind{width:calc(50% - 3px);order:1}
+  .tr-row .tr-kind{width:calc(50% - 3px);order:1;font-weight:400;letter-spacing:.05em;color:var(--forest);text-align:center;padding:6px 2px}
   .in,.btn{min-height:44px}
   select.in{font-size:16px}
   .card{padding:14px}
@@ -159,7 +159,7 @@ textarea.in{resize:vertical;min-height:80px}
 .tr-row{display:flex;gap:8px;align-items:center;margin:5px 0}
 .tr-row .tr-day{width:36px;text-align:center;flex:none;font-size:10.5px;font-weight:400;letter-spacing:.06em;padding:2px 3px}
 .tr-row .tr-input{flex:1}
-.tr-row .tr-kind{width:80px;flex:none}
+.tr-row .tr-kind{width:80px;flex:none;font-size:10.5px;font-weight:400;letter-spacing:.06em;color:var(--forest);text-align:center;padding:6px 2px}
 .pwa-tip{position:fixed;bottom:0;left:0;right:0;background:var(--forest2);color:#fbf8ef;padding:12px 18px;font-size:13px;display:none;align-items:center;justify-content:space-between;gap:12px;z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
 .pwa-tip.on{display:flex}
 .pwa-tip button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;white-space:nowrap}
@@ -514,7 +514,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
       </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.9.0（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.9.1（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 <div class="pwa-tip" id="pwaTip">
