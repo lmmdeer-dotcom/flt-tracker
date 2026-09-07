@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tadashi健身加油">
-<link rel="manifest" href="./manifest.json?v=1.7.1">
-    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.7.1">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.7.1">
+<link rel="manifest" href="./manifest.json?v=1.8">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.8">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.8">
 <title>Tadashi健身加油！</title>
 <style>
 /* ============ Editorial 主题：暖灰纸张 × 深森林绿 × 陶土橙 ============ */
@@ -127,6 +127,20 @@ textarea.in{resize:vertical;min-height:80px}
 .chart-box canvas{width:100%;height:260px;display:block}
 .chart-box.tall canvas{height:320px}
 .chart-box.short canvas{height:170px}
+
+/* ============= 年度打卡热力图 ============= */
+.hm-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.hm-months{display:grid;grid-auto-flow:column;gap:3px;font-size:10px;color:var(--mut);height:14px;align-items:end;margin-bottom:2px;margin-left:22px}
+.hm-months span{white-space:nowrap}
+.hm-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);gap:3px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:thin}
+.hm-cell{width:12px;height:12px;background:var(--line2);border-radius:3px;cursor:pointer;transition:transform .12s}
+.hm-cell:hover{transform:scale(1.45);outline:1.5px solid var(--ink);z-index:1;position:relative}
+.hm-cell[data-fut]{opacity:.25;cursor:not-allowed}
+.hm-cell[data-fut]:hover{transform:none;outline:none}
+.hm-wd{display:flex;flex-direction:column;gap:3px;padding-top:4px;font-size:10px;color:var(--mut);flex:none}
+.hm-wd div{height:12px;line-height:12px}
+.hm-legend{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;color:var(--mut);flex-wrap:wrap}
+.hm-legend .sq{width:11px;height:11px;border-radius:3px;display:inline-block;background:var(--line2);vertical-align:middle}
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 2px 2px}
 .legend button{border:1px solid var(--line);background:transparent;font-size:12px;color:var(--mut);border-radius:999px;padding:3px 11px;display:flex;align-items:center;gap:6px}
 .legend button i{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -365,7 +379,11 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
 
   <!-- ============ 习惯 ============ -->
   <section class="view" id="v-habits">
-    <div class="grid g2" style="grid-template-columns:1.3fr 1fr">
+    <div class="hm-toolbar"><b style="font-size:13px;color:var(--mut)">视图</b>
+      <button class="btn mini" id="hmTabList" onclick="setHabitsView('list')">列表</button>
+      <button class="btn ghost mini" id="hmTabYear" onclick="setHabitsView('year')">年历热力图</button>
+    </div>
+    <div id="hmListPane" class="grid g2" style="grid-template-columns:1.3fr 1fr">
       <div class="card"><h3>习惯打卡 <span class="tag" id="hDateTag"></span></h3>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
           <input type="date" class="in" id="hDate" style="max-width:170px" onchange="go('habits')">
@@ -378,6 +396,11 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <div id="hDefs"></div>
         <div style="margin-top:10px"><button class="btn danger mini" onclick="clearTab('checks')">清空全部打卡</button></div>
       </div>
+    </div>
+    <div id="hmYearPane" class="card" style="display:none">
+      <h3>年度打卡热力图 <span class="tag" id="hmYearTag"></span></h3>
+      <div class="note" style="margin:0 0 8px">色块越深 = 当天完成的习惯越多；点格子跳到那天打卡</div>
+      <div id="hmYearContent"></div>
     </div>
   </section>
 
@@ -491,7 +514,7 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
         <button class="btn danger" onclick="wipeAll()">清空全部</button></div>
       </div>
     </div>
-    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.7.1（单文件 · Supabase 云同步 · PWA 离线可用）</p>
+    <p class="foot-note">EAT WELL · MOVE DAILY · KEEP LIGHT<br>Tadashi健身加油！ v1.8.0（单文件 · Supabase 云同步 · PWA 离线可用）</p>
   </section>
 </div>
 <div class="pwa-tip" id="pwaTip">
@@ -1897,6 +1920,85 @@ function rHabits(){
         return `<div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--line2)"><button class="dot ${on?"chk":""}" onclick="togCheck('${h.id}')" style="width:26px;height:26px">${on?"✓":""}</button>
         <div style="flex:1"><b>${esc(h.name)}</b><div class="note">本月打卡 ${T.checks.filter(x=>x.owner===o&&x.habitId===h.id&&x.date.slice(0,7)===d.slice(0,7)&&x.done).length} 天</div></div></div>`;}).join("");}
   $("hDefs").innerHTML=hs.length?`<ul class="list">${hs.map(h=>`<li><span style="flex:1">${esc(h.name)}</span><button class="x" onclick="delHabit('${h.id}')">✕</button></li>`).join("")}</ul>`:'<div class="empty">—</div>';
+  // 应用持久化的视图模式
+  setHabitsView(gs().hview||'list');
+}
+
+/* ================= 习惯 · 年历热力图 ================= */
+const TERRA_RGB="192,95,56";
+window.setHabitsView=function(v){
+  const cur=gs().hview||'list';
+  if(v!=='list'&&v!=='year')v='list';
+  $("hmTabList").className="btn mini "+(v==='list'?'acc':'ghost');
+  $("hmTabYear").className="btn mini "+(v==='year'?'acc':'ghost');
+  $("hmListPane").style.display=v==='list'?'':'none';
+  $("hmYearPane").style.display=v==='year'?'':'none';
+  if(v==='year')rHabitsYear();
+  if(cur!==v)ss({hview:v});
+};
+window.hmJump=function(dt){
+  $("hDate").value=dt;
+  setHabitsView('list');
+  go('habits');
+};
+function rHabitsYear(){
+  const o=curOwner();
+  const hs=T.habits.filter(x=>x.owner===o);
+  const total=hs.length;
+  const hid=new Set(hs.map(h=>h.id));
+  const myChecks=T.checks.filter(x=>x.owner===o&&hid.has(x.habitId)&&x.done);
+  const perDay={};
+  myChecks.forEach(c=>{perDay[c.date]=(perDay[c.date]||0)+1;});
+  const t=today();
+  const allDates=Object.keys(perDay).sort();
+  const first=allDates[0]||addDays(t,-7*52);
+  const gridStart=addDays(weekStart(first),-1); // 该周周日（顶行）
+  const tD=parseD(t);
+  const totalDays=Math.round((tD-parseD(gridStart))/(24*3600*1000))+1;
+  const weeks=Math.max(1,Math.ceil(totalDays/7));
+  // 月份标签（每列首格换月才打）
+  let lastM=-1;const monthHTML=[];
+  for(let w=0;w<weeks;w++){
+    const colStart=addDays(gridStart,w*7);
+    const m=parseD(colStart).getMonth();
+    if(m!==lastM){monthHTML.push(`<span style="grid-column:${w+1}">${m+1}月</span>`);lastM=m;}
+  }
+  // 格子（5 档单色透明度）
+  let cellsHTML='';let activeDays=0,totalDone=0;
+  for(let w=0;w<weeks;w++){
+    for(let d=0;d<7;d++){
+      const dt=addDays(gridStart,w*7+d);
+      if(parseD(dt)>tD){cellsHTML+=`<div class="hm-cell" data-fut="1"></div>`;continue;}
+      const cnt=perDay[dt]||0;
+      if(cnt>0){activeDays++;totalDone+=cnt;}
+      let lv=0,bg='var(--line2)';
+      if(total>0&&cnt>0){
+        if(cnt===1)lv=1;else if(cnt===2)lv=2;else if(cnt<total)lv=3;else lv=4;
+        bg=`rgba(${TERRA_RGB},${(0.22+lv*0.18).toFixed(2)})`;
+      }
+      const tip=total>0?`${dt} · 完成 ${cnt}/${total} 习惯`:`${dt} · 暂无习惯`;
+      cellsHTML+=`<div class="hm-cell" data-date="${dt}" onclick="hmJump('${dt}')" title="${tip}" style="background:${bg}"></div>`;
+    }
+  }
+  const wdLabels=['日','一','二','三','四','五','六'];
+  const wdHTML=wdLabels.map((l,i)=>i%2===0?`<div>${l}</div>`:`<div></div>`).join("");
+  const avg=activeDays?(totalDone/activeDays).toFixed(1):'0';
+  $("hmYearContent").innerHTML=
+    `<div class="hm-months" style="grid-template-columns:repeat(${weeks},12px)">${monthHTML.join("")}</div>
+     <div style="display:flex;gap:6px;align-items:flex-start">
+       <div class="hm-wd">${wdHTML}</div>
+       <div class="hm-grid" style="grid-template-columns:repeat(${weeks},12px)">${cellsHTML}</div>
+     </div>
+     <div class="hm-legend">
+       <span>少</span>
+       <span class="sq"></span>
+       <span class="sq" style="background:rgba(${TERRA_RGB},.4)"></span>
+       <span class="sq" style="background:rgba(${TERRA_RGB},.65)"></span>
+       <span class="sq" style="background:rgba(${TERRA_RGB},.9)"></span>
+       <span>多</span>
+       <span style="margin-left:10px">${activeDays} 天有打卡 · 累计 ${totalDone} 次${total?` · 活动日均 ${avg} 次`:''}</span>
+     </div>`;
+  $("hmYearTag").textContent=`${weeks} 周 · ${first.slice(0,7)} → ${t}`;
 }
 
 /* ================= 复盘 ================= */
