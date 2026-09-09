@@ -206,6 +206,31 @@ textarea.in{resize:vertical;min-height:80px}
 a{color:var(--forest)}
 code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:12.5px}
 .num-inline{font-variant-numeric:tabular-nums}
+/* ===== 训练 v2：周视图（全部复用既有 token，不新增变量） ===== */
+.dy-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px dashed var(--line2)}
+.dy-row:last-child{border-bottom:0}
+.dy-head{width:92px;flex:none}
+.dy-head b{display:block;font-size:13.5px;color:var(--forest2);line-height:1.2}
+.dy-head span{font-size:11px;color:var(--mut)}
+.dy-body{flex:1;min-width:0}
+.dy-ex{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:3px 8px;margin:2px 4px 2px 0;font-size:12.5px;color:var(--ink)}
+.dy-ex.done{background:var(--forestSoft);border-color:transparent}
+.dy-ex button{font:inherit;line-height:1}
+.dy-foot{flex:none;display:flex;align-items:center;gap:4px}
+.dy-plan{color:var(--warn);border-color:transparent;background:#f7eccf}
+.mini-note{font-size:11px;color:var(--mut)}
+.st-card{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px}
+.joy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:10px}
+.joy-cell{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center}
+.joy-cell .num{font-family:var(--serif);font-size:26px;color:var(--forest2);line-height:1.1}
+.joy-cell .num small{font-size:14px;font-family:var(--sans)}
+.stat-mini{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line2);gap:10px}
+.stat-mini:last-child{border-bottom:0}
+.stat-mini b{font-family:var(--serif);font-size:17px;color:var(--forest2)}
+.dy-rest{display:inline-block;color:var(--mut);font-size:12.5px;padding:2px 2px}
+.dy-add{border:1px dashed var(--line);border-radius:999px;padding:3px 12px;font-size:12px;color:var(--mut);cursor:pointer;background:transparent;transition:.15s}
+.dy-add:hover{border-color:var(--forest);color:var(--forest);background:var(--forestSoft)}
+@media(max-width:560px){.dy-head{width:74px}}
 </style>
 </head>
 <body>
@@ -360,32 +385,44 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
 
   <!-- ============ 训练 ============ -->
   <section class="view" id="v-train">
-    <div class="grid g2" style="grid-template-columns:1fr 1.15fr">
-      <div class="card"><h3>每周训练计划 <span class="tag">模板</span></h3>
-        <div id="trTemplate"></div>
-        <div style="margin-top:8px"><button class="btn ghost mini" onclick="saveTemplate()">保存本周模板</button>
-          <button class="btn danger mini" onclick="clearTemplate()">清空模板</button></div>
-        <p class="note" style="margin-top:8px">按周一至周日排布每周固定训练，无需重复设置；打卡结果记入训练日志。</p>
-      </div>
-      <div class="card"><h3>本周打卡 <span class="tag" id="trWeekTag"></span></h3>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+    <div class="grid g2" style="grid-template-columns:1.22fr 1fr">
+      <div class="card"><h3>本周训练 <span class="tag" id="trWeekTag"></span></h3>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:2px">
           <button class="btn ghost mini" onclick="weekShift(-1)">‹ 上周</button>
           <b class="serif" id="trWeekLabel" style="flex:1;text-align:center"></b>
           <button class="btn ghost mini" onclick="weekShift(1)">下周 ›</button></div>
-        <div id="trProgress" style="margin-bottom:6px"></div>
-        <div id="trPlanList"></div>
+        <div id="trProgress" style="margin:4px 0 2px"></div>
+        <div id="trWeekPlan"></div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn acc mini" onclick="newWeek()">＋ 开启新的一周</button>
+          <span class="note">下周自动沿用本周的安排，随时可改可加</span></div>
+      </div>
+      <div class="card"><h3>打卡训练 <span class="tag">记录即打卡</span></h3>
+        <label class="f">日期</label>
+        <div class="row"><div class="cell"><input class="in" type="date" id="lDate" onchange="syncFormDate()">
+          <span class="note" id="lDateNote"></span></div>
+          <div class="cell"><button class="btn ghost mini" onclick="setLDate('today')">今天</button>
+            <button class="btn ghost mini" onclick="setLDate('last')">补记昨天</button></div></div>
+        <label class="f">练了什么（可多项）</label>
+        <div id="exRows"></div>
+        <div style="margin:4px 0 2px"><button class="dy-add" onclick="addExRow()">＋ 再加一项</button></div>
+        <div class="st-card" id="stBox" style="margin-top:12px;padding:12px 14px">
+          <div class="note" style="font-weight:600;color:var(--forest2)">练完顺手点 3 下 · 攒出你的爽感曲线（可整体跳过）</div>
+          <div style="margin-top:8px"><div class="mini-note" style="margin-bottom:4px">练前状态</div><div class="chip-row" id="stPre"></div></div>
+          <div style="margin-top:8px"><div class="mini-note" style="margin-bottom:4px">练后感受</div><div class="chip-row" id="stPost"></div></div>
+          <div style="margin-top:8px"><div class="mini-note" style="margin-bottom:4px">昨晚睡眠</div><div class="chip-row" id="stSleep"></div></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn acc" onclick="saveLog()">✓ 保存打卡</button>
+          <span class="note" id="lSaved"></span></div>
+        <div id="lDaySummary" style="display:none;margin-top:12px" class="note"></div>
       </div>
     </div>
     <div class="sec-t">训练日志</div>
-    <div class="grid g2">
-      <div class="card"><h3>自由记录一次训练</h3>
-        <div class="row"><div class="cell"><label class="f">日期</label><input class="in" type="date" id="lDate"></div>
-        <div class="cell"><label class="f">内容</label><input class="in" id="lName" placeholder="如 慢跑 5km"></div>
-        <div class="cell"><label class="f">类型</label><select class="in" id="lKind"><option>力量</option><option>有氧</option><option>瑜伽</option><option>普拉提</option><option>拉伸</option><option>HIIT</option><option>其他</option></select></div></div>
-        <div style="margin-top:12px"><button class="btn acc" onclick="addLog()">记录训练</button>
-          <button class="btn danger mini" onclick="clearTab('logs')">清空日志</button></div>
-      </div>
-      <div class="card"><h3>最近记录</h3><div id="trLogs"></div></div>
+    <div class="grid g2" style="grid-template-columns:1.2fr 1fr">
+      <div class="card"><h3>最近记录 <span class="tag">按周汇总</span></h3><div id="trLogs"></div>
+        <div style="margin-top:8px"><button class="btn danger mini" onclick="clearTab('logs')">清空日志</button></div></div>
+      <div class="card"><h3>训练爽感指数 <span class="tag" id="joyTag"></span></h3><div id="trJoy"></div></div>
     </div>
   </section>
 
@@ -419,13 +456,11 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
   <!-- ============ 复盘 ============ -->
   <section class="view" id="v-review">
     <div class="grid g2" style="grid-template-columns:1.2fr 1fr">
-      <div class="card"><h3>每周复盘 <span class="tag">周一起始</span></h3>
-        <label class="f">本周起始日</label><input type="date" class="in" id="rWeek" onchange="loadReview()">
-        <div id="rMetrics" class="note" style="margin:10px 0"></div>
-        <label class="f">本周完成 / 值得肯定</label><textarea class="in" id="rDone" placeholder="如：训练 4 次、饮食缺口达标 5 天…"></textarea>
-        <label class="f">亮点 / 身体感受</label><textarea class="in" id="rWin" placeholder="如：精力更好、裤腰变松…"></textarea>
-        <label class="f">卡点 / 困难</label><textarea class="in" id="rBlock" placeholder="如：应酬多、熬夜…"></textarea>
-        <label class="f">下周调整</label><textarea class="in" id="rNext" placeholder="如：碳水集中在训练日…"></textarea>
+      <div class="card"><h3>每周复盘 <span class="tag">自动小结 + 一句话</span></h3>
+        <label class="f">复盘哪一周</label><input type="date" class="in" id="rWeek" onchange="loadReview()">
+        <div id="rStats" style="margin-top:10px"></div>
+        <label class="f" style="margin-top:16px">下周想做的一件事 <span class="note">一句话就够</span></label>
+        <textarea class="in" id="rNext" style="min-height:62px;margin-top:6px" placeholder="如：碳水集中在训练日 / 周三加一次晨练"></textarea>
         <div style="margin-top:14px;display:flex;gap:8px"><button class="btn acc" onclick="saveReview()">保存本周复盘</button>
           <span class="note" style="align-self:center" id="rSaved"></span></div>
       </div>
@@ -444,27 +479,25 @@ code{background:var(--card2);border:1px solid var(--line);padding:1px 6px;border
     <div class="split">
       <div class="card"><h3>写下今天 <span class="tag" id="dDateTag"></span></h3>
         <input type="date" class="in" id="dDate">
-        <textarea class="in" id="dText" style="margin-top:10px;min-height:170px" placeholder="今天的身体感受、心情、饮食与训练的小记录…"></textarea>
-        <div style="margin-top:14px">
-          <label class="f">今天的状态</label>
-          <div id="dMoodRow" class="mood-row">
-            <button type="button" class="mood-btn" data-mood="charged" title="满电"><img src="icons/mood-charged.png" alt="满电"><span>满电</span></button>
-            <button type="button" class="mood-btn" data-mood="calm" title="平稳"><img src="icons/mood-calm.png" alt="平稳"><span>平稳</span></button>
-            <button type="button" class="mood-btn" data-mood="tired" title="疲惫"><img src="icons/mood-tired.png" alt="疲惫"><span>疲惫</span></button>
-            <button type="button" class="mood-btn" data-mood="sore" title="酸痛"><img src="icons/mood-sore.png" alt="酸痛"><span>酸痛</span></button>
-            <button type="button" class="mood-btn" data-mood="sad" title="沮丧"><img src="icons/mood-sad.png" alt="沮丧"><span>沮丧</span></button>
-            <button type="button" class="mood-btn" data-mood="recover" title="恢复"><img src="icons/mood-recover.png" alt="恢复"><span>恢复</span></button>
-          </div>
-          <div id="dMoodEmpty" class="note" style="margin-top:4px">点击上面的小猫记录今天的状态</div>
+        <label class="f" style="margin-top:12px">今天的状态</label>
+        <div id="dMoodRow" class="mood-row">
+          <button type="button" class="mood-btn" data-mood="charged" title="满电"><img src="icons/mood-charged.png" alt="满电"><span>满电</span></button>
+          <button type="button" class="mood-btn" data-mood="calm" title="平稳"><img src="icons/mood-calm.png" alt="平稳"><span>平稳</span></button>
+          <button type="button" class="mood-btn" data-mood="tired" title="疲惫"><img src="icons/mood-tired.png" alt="疲惫"><span>疲惫</span></button>
+          <button type="button" class="mood-btn" data-mood="sore" title="酸痛"><img src="icons/mood-sore.png" alt="酸痛"><span>酸痛</span></button>
+          <button type="button" class="mood-btn" data-mood="sad" title="沮丧"><img src="icons/mood-sad.png" alt="沮丧"><span>沮丧</span></button>
+          <button type="button" class="mood-btn" data-mood="recover" title="恢复"><img src="icons/mood-recover.png" alt="恢复"><span>恢复</span></button>
         </div>
-        <div style="margin-top:10px">
-          <label class="f">附加标签（可多选）</label>
-          <div id="dTagsRow" class="chip-row">
+        <div id="dMoodEmpty" class="note" style="margin-top:4px">点上面的小猫记一下今天的状态</div>
+        <label class="f" style="margin-top:14px">今天的一句话 <span class="note">一两句就够</span></label>
+        <textarea class="in" id="dText" style="margin-top:6px;min-height:64px" placeholder="如：昨晚睡得不错，早上状态在线；今天练完心情很好…"></textarea>
+        <details style="margin-top:12px"><summary class="note" style="cursor:pointer;color:var(--mut)">更多：附加标签（酸痛 / 经期 / 睡眠差）</summary>
+          <div id="dTagsRow" class="chip-row" style="margin-top:8px">
             <button type="button" class="chip" data-tag="酸痛">酸痛</button>
             <button type="button" class="chip" data-tag="经期">经期</button>
             <button type="button" class="chip" data-tag="睡眠差">睡眠差</button>
           </div>
-        </div>
+        </details>
         <div style="margin-top:12px"><button class="btn acc" onclick="saveDiary()">保存日记</button></div>
       </div>
       <div class="card"><h3>日记本</h3><div id="dList"></div></div>
@@ -1609,9 +1642,18 @@ function seedMeals(){
       T.meals.push({id:uid(),owner:o,date:d,meal:plan[j][0],kcal:kc+Math.round(rnd(-60,60)),protein:p2,carbs:c2,fat:f2,note:foods[j][0],createdAt:now(),updatedAt:now()});}}
   saveT("meals");
 }
-function seedPlans(){
-  const o=curOwner();const defs=[["周一","力量 · 上肢","力量"],["周二","有氧 · 快走 40min","有氧"],["周三","瑜伽 / 呼吸","瑜伽"],["周四","力量 · 下肢","力量"],["周五","HIIT 20min","HIIT"],["周六","户外骑行 60min","有氧"],["周日","拉伸 · 放松","拉伸"]];
-  T.plans=T.plans.filter(x=>x.owner!==o);defs.forEach((dd,i)=>{T.plans.push({id:uid(),owner:o,dow:i,name:dd[1],kind:dd[2],updatedAt:now(),createdAt:now()});});saveT("plans");
+function seedPlans(){ /* v2：生成近两周带状态打卡 + 一条明日计划，演示周视图与爽感卡 */
+  const o=curOwner();if(owned("logs").length)return;
+  const t=today();const base=weekStart(addDays(t,-7));
+  const defs=[["瑜伽流",60,"瑜伽"],["普拉提核心",30,"普拉提"],["慢跑 4km",40,"有氧"],["力量 · 上肢",45,"力量"],["拉伸放松",20,"拉伸"]];
+  for(let w=0;w<2;w++)for(let i=0;i<4;i++){
+    const off=(i*2+(w?1:0))%7;const d=addDays(addDays(base,w*7),off);if(d>t)continue;
+    const exs=[defs[(w*3+i*2)%defs.length]];if(i%2===1)exs.push(defs[(w*3+i*2+2)%defs.length]);
+    const rec={id:uid(),owner:o,date:d,exercises:exs.map(e=>({name:e[0],category:e[2],duration:e[1]})),done:true,planned:false,createdAt:now()};
+    rec.preState=2+Math.floor(Math.random()*2);rec.postState=Math.min(5,rec.preState+1+Math.floor(Math.random()*2));rec.sleep=["good","ok","bad"][Math.floor(Math.random()*3)];
+    rec.kind=recCat(rec);rec.name=recName(rec);upRec(rec);T.logs.push(rec);}
+  const nd=addDays(t,1);if(!owned("logs").find(x=>x.date===nd)){const r={id:uid(),owner:o,date:nd,exercises:[{name:"瑜伽流",category:"瑜伽",duration:60}],planned:true,done:false,kind:"瑜伽",name:"瑜伽流",createdAt:now(),updatedAt:now()};T.logs.push(r);}
+  saveT("logs");
 }
 function seedHabits(){
   const o=curOwner();const hs=["饮水 ≥ 2L","步数 ≥ 8000","23:30 前入睡","记录每餐"];
@@ -1635,9 +1677,9 @@ function advice(){
   if(!p||!lb){return out;}
   if(!byDate("body",o,t).length)out.push({t:"早上花 10 秒记录今日体重 / 体脂，趋势才看得清。",k:"body"});
   const c=calc(p,lb.kg);
-  const planToday=(T.plans.find(x=>x.owner===o&&x.dow===((parseD(t).getDay()+6)%7))||{}).name;
   const loggedT=owned("logs").some(x=>x.date===t);
-  if(planToday&&!loggedT)out.push({t:`今日计划：${planToday}。完成后在「训练」页打卡。`,k:"train"});
+  const trainUsed=owned("logs").some(x=>isDone(x)&&x.date>=addDays(t,-14));
+  if(!loggedT&&trainUsed)out.push({t:"今天还没记录训练。练完在「训练」页打卡，30 秒顺带记下练前 / 练后状态。",k:"train"});
   const hs=T.habits.filter(x=>x.owner===o);const undone=hs.filter(h=>!T.checks.some(x=>x.owner===o&&x.habitId===h.id&&x.date===t&&x.done));
   if(undone.length)out.push({t:`今日习惯还差 ${undone.length} 项：${undone.map(h=>h.name).join("、")}`,k:"habits"});
   if(c){const eaten=byDate("meals",o,t).reduce((s,m)=>s+(+m.kcal||0),0);
@@ -1661,8 +1703,8 @@ function rOverview(){
   const prog=clamp((startKg-lb.kg)/(startKg-p.goalKg)*100,0,100);
   const todayBody=byDate("body",o,today());
   const eaten=byDate("meals",o,today()).reduce((s,m)=>s+(+m.kcal||0),0);
-  const weekPlanned=T.plans.filter(x=>x.owner===o).length;
-  const ws=weekStart(today());let doneLogs=0;for(let i=0;i<7;i++){if(owned("logs").some(x=>x.date===addDays(ws,i)))doneLogs++;}
+  const weekPlanned=0; /* plans 模板已废弃，周进度按"已练天数"统计 */
+  const ws=weekStart(today());let doneLogs=0;for(let i=0;i<7;i++){if(owned("logs").some(x=>x.date===addDays(ws,i)&&isDone(x)))doneLogs++;}
   const hs=T.habits.filter(x=>x.owner===o);const doneH=hs.filter(h=>T.checks.some(x=>x.owner===o&&x.habitId===h.id&&x.date===today()&&x.done)).length;
   const cardsHtml=[["今日体重",`${lb.kg}<small> kg</small>`,todayBody.length?"今早已记录":"以最近一次为准",delta>0?`<span class="delta down">较起始 −${delta} kg</span>`:delta<0?`<span class="delta up">较起始 +${Math.abs(delta)} kg</span>`:'<span class="delta flat">与起始持平</span>'],
     ["目标进度",`${round(prog,0)}<small>%</small>`,"当前 → 目标",`<div class="bar"><i style="width:${clamp(prog,0,100)}%"></i></div><div class="meter-txt"><span>${startKg} kg</span><span>${p.goalKg} kg</span></div>`],
@@ -1670,7 +1712,7 @@ function rOverview(){
     ["目标摄入",`${c.cal}<small> kcal</small>`,"TDEE "+Math.round(c.tdee),`<span class="note">今日已录 ${Math.round(eaten)}</span>`]] ;
   cardsHtml.forEach((cd,i)=>{const d=document.createElement("div");d.className="card stat";d.innerHTML=`<div class="lab">${cd[0]}</div><div class="num">${cd[1]}</div><div class="lab">${cd[2]}</div>${cd[3]||""}`;cards.appendChild(d);});
   const tk=$("ovTasks");tk.innerHTML=`
-    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line2)"><span>本周训练</span><b>${doneLogs}/${weekPlanned||"无"}${weekPlanned?` <span class="pill g">${weekPlanned?Math.round(doneLogs/weekPlanned*100):0}%</span>`:""}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line2)"><span>本周训练</span><b>${doneLogs} 天${doneLogs?` <span class="pill g">${Math.round(doneLogs/7*100)}%</span>`:""}</b></div>
     <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line2)"><span>今日习惯</span><b>${doneH}/${hs.length}<span class="pill g" style="margin-left:6px">${hs.length?Math.round(doneH/hs.length*100):0}%</span></b></div>
     <div style="display:flex;justify-content:space-between;padding:7px 0"><span>最近体重变化(7日)</span><span id="w7"></span></div>`;
   const w7=owned("body").slice().sort((a,b)=>a.date<b.date?-1:1).slice(-8);const el=$("w7");if(el&&w7.length>=8){const d=round(w7[w7.length-1].kg-w7[0].kg,1);el.innerHTML=d>0.05?`<b class="up">+${d} kg</b>`:d<-0.05?`<b class="down">${d} kg</b>`:`<b class="flat">持平</b>`;}
@@ -1866,50 +1908,142 @@ function rMeals(){
   cfgSeries("cMeals",ser,{});drawLegend("cMeals","lgMeals");bindHover("cMeals");
 }
 
-/* ================= 训练 ================= */
+/* ================= 训练 v2（周视图 = 计划 + 打卡一体；顺手采集状态） ================= */
 let trainWeek=weekStart(today());
+const WD_CN=['周一','周二','周三','周四','周五','周六','周日'];
+const EN_LABEL={1:'很差',2:'疲惫',3:'一般',4:'不错',5:'满电'};
+const SL_OPTS=[['good','睡足 7h+'],['ok','一般 6-7h'],['bad','不足 6h']];
+/* —— 兼容读取：新记录 exercises[]；旧记录 name/kind 自动转成单动作 —— */
+function exOf(r){return(r&&Array.isArray(r.exercises)&&r.exercises.length)?r.exercises:((r&&(r.name||r.kind))?[{name:r.name||normKind(r.kind)||"训练",category:normKind(r.kind),duration:+r.duration||0}]:[]);}
+function recName(r){return exOf(r).map(e=>e.name||e.category).join(" + ")||"训练";}
+function recCat(r){const c=normKind((exOf(r)[0]||{}).category);return c||"其他";}
+function recMin(r){return exOf(r).reduce((s,e)=>s+(+e.duration||0),0);}
+function isDone(r){return!!r&&!r.planned&&r.done!==false;} /* 旧记录无 planned/done → 视为完成 */
 function weekShift(n){const d=parseD(trainWeek);d.setDate(d.getDate()+n*7);trainWeek=dstr(d);rTrain();}
-function templateRows(){const rows=[];for(let i=0;i<7;i++){const found=T.plans.find(x=>x.owner===curOwner()&&x.dow===i);rows[i]=found?{...found,kind:normKind(found.kind)}:{dow:i,name:"",kind:"力量"};}return rows;}
-function rTemplate(){const o=curOwner();const wd=WD_EN;
-  $("trTemplate").innerHTML=wd.map((w,i)=>{const t=templateRows()[i];return `<div class="tr-row"><span class="pill g tr-day">${w}</span>
-  <select class="in tr-kind" id="tk${i}">${KIND_OPTS.map(k=>`<option value="${k}"${t.kind===k?' selected':''}>${k}</option>`).join('')}</select>
-  <input class="in tr-input" id="tp${i}" value="${esc(t.name||'')}" placeholder="休息 / 训练内容"></div>`;}).join('');
+function focusDate(d){$("lDate").value=d;syncFormDate();const nm=$("exRows").querySelector(".ex-name");if(nm){nm.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>nm.focus(),300);}}
+window.setLDate=function(m){const l=$("lDate");l.value=m==="last"?addDays(today(),-1):today();syncFormDate();};
+/* —— 打卡表单：多动作行（一天练几样就加几行） —— */
+window.addExRow=function(){const box=$("exRows");const row=document.createElement("div");row.className="row ex-row";row.style.cssText="margin-top:6px;align-items:flex-end";
+  row.innerHTML=`<div class="cell" style="flex:1.6;min-width:130px"><input class="in ex-name" placeholder="动作，如 瑜伽流 / 慢跑"></div>
+  <div class="cell" style="flex:.9;min-width:96px"><select class="in ex-cat">${KIND_OPTS.map(k=>`<option>${k}</option>`).join("")}</select></div>
+  <div class="cell" style="flex:.7;min-width:70px"><input class="in ex-dur" type="number" min="5" step="5" placeholder="分钟"></div>
+  <button type="button" class="x" title="移除这一项" onclick="rmExRow(this)" style="height:36px">✕</button>`;
+  box.appendChild(row);row.querySelector(".ex-name").focus();};
+window.rmExRow=function(btn){const box=$("exRows");if(box.children.length<=1){const r=btn.closest(".ex-row");r.querySelector(".ex-name").value="";r.querySelector(".ex-dur").value="";return;}btn.closest(".ex-row").remove();};
+function collectEx(){const out=[];$("exRows").querySelectorAll(".ex-row").forEach(r=>{const name=r.querySelector(".ex-name").value.trim();const cat=r.querySelector(".ex-cat").value;const dur=parseInt(r.querySelector(".ex-dur").value)||0;if(name||dur)out.push({name:name||cat,category:cat,duration:dur});});return out;}
+/* —— 状态采集：练前 / 练后（1-5）+ 昨晚睡眠（3 档），默认空 = 跳过 —— */
+function bindPick(box){box.querySelectorAll(".chip").forEach(c=>{c.onclick=()=>{box.querySelectorAll(".chip.on").forEach(x=>x.classList.remove("on"));c.classList.add("on");};});}
+function renderPicks(cur){cur=cur||{};const pre=$("stPre"),post=$("stPost"),sl=$("stSleep");
+  [["pre",pre],[ "post",post]].forEach(pair=>{const box=pair[1];box.innerHTML=[1,2,3,4,5].map(v=>`<button type="button" class="chip${+cur[pair[0]]===v?" on":""}" data-v="${v}">${EN_LABEL[v]}</button>`).join("");bindPick(box);});
+  sl.innerHTML=SL_OPTS.map(o=>`<button type="button" class="chip${cur.sleep===o[0]?" on":""}" data-v="${o[0]}">${o[1]}</button>`).join("");bindPick(sl);}
+function pickVal(box){const on=box.querySelector(".chip.on");return on?on.dataset.v:null;}
+function readPicks(){return{pre:pickVal($("stPre")),post:pickVal($("stPost")),sleep:pickVal($("stSleep"))};}
+function syncFormDate(){const o=curOwner(),d=$("lDate").value,st=$("stBox"),sum=$("lDaySummary");
+  if(st)st.style.display=(d&&d>today())?"none":"";
+  const note=$("lDateNote");
+  if(!d)note.textContent="";
+  else if(d>today())note.textContent="未来日期 → 存为计划，练完当天会自动打卡";
+  else if(d===today())note.textContent="今天 · 记录即打卡";
+  else note.textContent="补记过去的一天";
+  if(sum)sum.style.display="none";
+  const rec=d?owned("logs").find(x=>x.date===d):null;
+  renderPicks(rec||{});
+  if(rec&&sum){const done=isDone(rec);sum.style.display="";sum.innerHTML=`<b style="color:var(--forest2)">${d} ${done?"已练":"已安排"}</b><div style="margin:6px 0 2px">${exOf(rec).map(e=>`<span class="pill ${done?"g":done===false?"y":""}" style="margin:0 4px 4px 0">${esc(e.name)}${e.duration?` · ${e.duration}min`:""}</span>`).join("")}</div>
+    <span style="display:inline-flex;gap:8px;margin-top:4px"><button class="btn ghost mini" onclick="appendToday()">＋ 再记一项</button>
+    <button class="btn danger mini" onclick="delDay()">${done?"撤销这天打卡":"删掉这条计划"}</button></span>`;}
 }
-window.saveTemplate=function(){const o=curOwner();for(let i=0;i<7;i++){const name=$("tp"+i).value.trim();const kind=$("tk"+i).value;
-    const ex=T.plans.find(x=>x.owner===o&&x.dow===i);if(!name){if(ex){tomb("plans",ex.id);T.plans=T.plans.filter(x=>x.id!==ex.id);}continue;}
-    if(ex){ex.name=name;ex.kind=kind;upRec(ex);}else T.plans.push({id:uid(),owner:o,dow:i,name,kind,createdAt:now(),updatedAt:now()});}
-  saveT("plans");toast("周训练模板已保存");rTrain();};
-window.clearTemplate=function(){const o=curOwner();tomb("plans",T.plans.filter(x=>x.owner===o).map(x=>x.id));T.plans=T.plans.filter(x=>x.owner!==o);saveT("plans");toast("模板已清空");rTrain();};
-function rPlanList(){const o=curOwner();const wd=WD_EN;
-  const items=T.plans.filter(x=>x.owner===o).sort((a,b)=>a.dow-b.dow);
-  if(!items.length){$("trPlanList").innerHTML='<div class="empty">左侧先设置每周训练模板</div>';$("trProgress").innerHTML="";}
-  else{
-    const rows=[];for(let i=0;i<7;i++){const d=addDays(trainWeek,i);const pl=items.find(x=>x.dow===i);
-      const done=owned("logs").some(x=>x.date===d);
-      const past=parseD(d)<parseD(today());
-      const btn=`<button class="dot ${done?"chk":""}" onclick="toggleLog('${d}','${pl?pl.id:"x"}')" title="点击打卡/取消">${done?"✓":""}</button>`;
-      const pk=pl?normKind(pl.kind):'';
-      rows.push(`<div style="display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px dashed var(--line2)">
-      <span style="width:76px;flex:none;font-weight:700;color:${past?"var(--mut)":"var(--forest2)"}">${wd[i]}</span>
-      <div style="flex:1">${pl?`<b>${esc(pl.name)}</b> <span class="pill ${KIND_COLOR[pk]||'y'}" style="margin-left:6px">${pk}</span>`:'<span class="note">休息日</span>'}</div>${btn}</div>`);}
-    const doneN=owned("logs").filter(x=>x.date>=trainWeek&&x.date<=addDays(trainWeek,6)).length;
-    $("trPlanList").innerHTML=rows.join("");$("trProgress").innerHTML=`<div class="meter-txt"><span>本周已完成训练</span><b>${doneN} 次</b></div>`;}
-  $("trWeekLabel").textContent=weekLabel(trainWeek)+(trainWeek===weekStart(today())?"（本周）":"");
-}
-window.toggleLog=function(date,plId){
-  const o=curOwner();const ex=owned("logs").find(x=>x.date===date);
-  if(ex){tomb("logs",ex.id);T.logs=T.logs.filter(x=>x.id!==ex.id);}
-  else{const pl=T.plans.find(x=>x.id===plId);const rec={id:uid(),owner:o,date,name:pl?pl.name:"自由训练",kind:pl?normKind(pl.kind):"其他",note:"计划打卡",createdAt:now()};upRec(rec);T.logs.push(rec);}
-  saveT("logs");rTrain();rOverview();
-};
-window.addLog=function(){const o=curOwner();const d=$("lDate").value||today();const n=$("lName").value.trim();if(!n){toast("填写训练内容","err");return;}
-  const rec={id:uid(),owner:o,date:d,name:n,kind:$("lKind").value,note:"自由记录",createdAt:now()};upRec(rec);T.logs.push(rec);saveT("logs");$("lName").value="";toast("已记录");rTrain();};
-function rTrain(){if(!$("lDate").value)$("lDate").value=today();rTemplate();
-  const o=curOwner();
-  const logs=owned("logs").slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,40);
-  $("trLogs").innerHTML=logs.length?`<ul class="list">${logs.map(x=>`<li><div style="flex:1"><b>${esc(x.date)}</b> · ${esc(x.name)} <span class="pill ${KIND_COLOR[normKind(x.kind)]||'g'}">${normKind(x.kind)}</span>${x.note==="计划打卡"?' <span class="note">计划✓</span>':""}</div><button class="x" onclick="delRow('logs','${x.id}')">✕</button></li>`).join('')}</ul>`:'<div class="empty">暂无训练记录</div>';
-  rPlanList();
-}
+window.appendToday=function(){addExRow();};
+window.delDay=function(){const o=curOwner(),d=$("lDate").value;const rec=owned("logs").find(x=>x.date===d);if(!rec)return;
+  tomb("logs",rec.id);T.logs=T.logs.filter(x=>x.id!==rec.id);saveT("logs");toast("已删除");rTrain();rOverview();};
+/* —— 保存打卡：当天已有记录则合并为多项，未来日期存为计划 —— */
+window.saveLog=function(){const o=curOwner();if(!o){toast("请先选择成员档案","err");return;}
+  const d=$("lDate").value;if(!d){toast("请选择日期","err");return;}
+  const exs=collectEx();if(!exs.length){toast("填一下练了什么再保存","err");return;}
+  const future=d>today(),pk=readPicks();
+  const ex=owned("logs").find(x=>x.date===d);
+  const rec=ex||{id:uid(),owner:o,date:d,createdAt:now()};
+  rec.exercises=exOf(rec).concat(exs);
+  if(future){rec.planned=true;rec.done=false;}
+  else{rec.planned=false;rec.done=true;if(pk.pre!=null)rec.preState=+pk.pre;if(pk.post!=null)rec.postState=+pk.post;if(pk.sleep!=null)rec.sleep=pk.sleep;}
+  rec.kind=recCat(rec);rec.name=recName(rec);upRec(rec);
+  if(ex){T.logs[T.logs.indexOf(ex)]=rec;}else T.logs.push(rec);
+  saveT("logs");
+  const box=$("exRows");box.innerHTML="";addExRow();
+  toast(future?"已加入安排，练完当天自动变打卡":"打卡成功","ok");rTrain();rOverview();};
+/* —— 周视图：一周七天，每天 = 动作容器 —— */
+function rWeekPlan(){const o=curOwner(),ws=trainWeek,t=today();const rows=[];
+  for(let i=0;i<7;i++){const d=addDays(ws,i);const rec=owned("logs").find(x=>x.date===d);
+    const exs=rec?exOf(rec):[];const done=rec?isDone(rec):false;
+    const chips=exs.map(e=>`<span class="dy-ex ${done?"done":done===false?"dy-plan":""}">${esc(e.name)}${e.duration?`<span style="opacity:.72">${e.duration}min</span>`:""}</span>`).join("");
+    const empty=`<span class="dy-rest">${d<t?"休息日":"还没安排"}</span>`;
+    let foot="";
+    if(rec&&done)foot=`<button class="dot chk" title="已完成 · 点此查看 / 加项" onclick="focusDate('${d}')">✓</button>`;
+    else if(rec&&!done)foot=`<span class="pill y" style="margin-right:6px">计划中</span><button class="dy-add" onclick="focusDate('${d}')">改</button>`;
+    else if(d<t)foot="";
+    else foot=`<button class="dy-add" onclick="focusDate('${d}')">${d===t?"＋ 打卡":"＋ 安排"}</button>`;
+    rows.push(`<div class="dy-row"><div class="dy-head"><b>${WD_CN[i]}</b><span>${d.slice(5).replace("-","/")}${d===t?' · 今天':""}</span></div>
+      <div class="dy-body">${chips||empty}</div><div class="dy-foot">${foot}</div></div>`);}
+  $("trWeekPlan").innerHTML=rows.join("");}
+function rProgress(){const o=curOwner(),ws=trainWeek,now=weekStart(today());
+  let done=0,plan=0;for(let i=0;i<7;i++){const rec=owned("logs").find(x=>x.date===addDays(ws,i));if(rec&&isDone(rec))done++;else if(rec&&!isDone(rec))plan++;}
+  if(ws===now)$("trProgress").innerHTML=`<div class="meter-txt"><span>本周已练</span><b>${done} 天</b></div><div class="bar"><i style="width:${Math.min(100,Math.round(done/7*100))}%"></i></div>`;
+  else if(ws>now)$("trProgress").innerHTML=`<div class="note">${plan?`已安排 ${plan} 天`:""}${plan?" · ":""}点「＋ 安排」提前规划，练完自动打卡</div>`;
+  else $("trProgress").innerHTML=`<div class="note">这一周训练了 ${done} 天</div>`;}
+/* —— 训练日志：按周聚合（M5） —— */
+function rLogsAgg(){const o=curOwner(),logs=owned("logs").slice();const map={};
+  logs.forEach(r=>{const ws=weekStart(r.date);(map[ws]=map[ws]||[]).push(r);});
+  const wks=Object.keys(map).sort().reverse().slice(0,8);const t=today();
+  $("trLogs").innerHTML=wks.length?wks.map((ws,i)=>{const list=map[ws].sort((a,b)=>b.date.localeCompare(a.date));
+    const done=list.filter(isDone).length,plan=list.length-done;
+    return `<details ${i<2?"open":""} style="padding:3px 0;border-bottom:1px dashed var(--line2)">
+    <summary style="cursor:pointer;font-weight:600;color:var(--forest2);font-size:13.5px;padding:5px 2px;display:flex;align-items:center;gap:8px">${weekLabel(ws)} 周
+      <span style="font-weight:400;font-size:12px;color:var(--mut)">练 ${done} 天${plan?` · 计划 ${plan} 天`:""}${ws===weekStart(t)?"（本周）":""}</span></summary>
+    <div style="padding:0 0 6px">${list.map(r=>{const st=r.postState!=null?`<span class="pill ${r.postState>=4?"g":"y"}">练后${EN_LABEL[r.postState]||""}</span>`:"";
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 2px">
+      <div style="flex:1;min-width:0"><b style="font-size:13px">${r.date.slice(5).replace("-","/")}</b> <span class="mini-note">${recMin(r)?recMin(r)+"min":""}</span>
+      ${isDone(r)?"":'<span class="pill y">计划</span>'} ${st}
+      <div style="margin-top:3px">${exOf(r).map(e=>`<span class="pill ${KIND_COLOR[normKind(e.category)]||"g"}" style="margin:0 3px 2px 0;font-weight:400">${esc(e.name)}${e.duration?` ${e.duration}min`:""}</span>`).join("")}</div></div>
+      <button class="x" onclick="delRow('logs','${r.id}')" title="删除">✕</button></div>`;}).join("")}</div></details>`;}).join("")
+    :'<div class="empty">还没有训练记录。<br>打卡一次，这里会自动按周汇总。</div>';}
+/* —— 爽感指数卡（M3，纯自动产出） —— */
+function joyLine(){const logs=owned("logs").filter(isDone).filter(r=>r.preState!=null&&r.postState!=null);
+  const n=logs.length;if(n<3)return `样本还少：再带感受打卡 ${3-n} 次，这里就会出现你的结论。`;
+  const up=logs.filter(r=>r.postState>r.preState).length,pct=Math.round(up/n*100);
+  const avg=round(logs.reduce((s,r)=>s+(+r.postState-+r.preState),0)/n,1);
+  if(pct>=75)return `近 ${n} 次训练，${pct}% 练完都比练前更舒服——身体在用爽感投票，继续。`;
+  if(avg>=0)return `平均爽感 <b>+${avg}</b>：多数时候练完会更好，偶尔低开高走也是收获。`;
+  return `平均练后比练前低 ${Math.abs(avg)}：试试更轻的强度，或睡足再来，别硬扛。`;}
+function rJoy(){const o=curOwner(),t=today();const el=$("trJoy"),tag=$("joyTag");if(!el)return;
+  const logs=owned("logs").filter(isDone);
+  const d30=logs.filter(r=>r.date>=addDays(t,-29)).length;
+  const rated=logs.filter(r=>r.preState!=null&&r.postState!=null);
+  const avg=rated.length?round(rated.reduce((s,r)=>s+(+r.postState-+r.preState),0)/rated.length,1):null;
+  const slGood=rated.filter(r=>r.sleep==="good");const okPct=slGood.length?Math.round(slGood.filter(r=>+r.postState>=4).length/slGood.length*100):null;
+  tag.textContent=rated.length?`已积累 ${rated.length} 次`:"待积累";
+  if(!rated.length){el.innerHTML=`<div class="empty" style="padding:18px 8px">打卡时顺手点 3 下（练前 / 练后 / 睡眠），攒几次这里就会出现你的 <b>爽感指数</b> —— 它比体重数字更早证明"练了有用"。</div>`;return;}
+  el.innerHTML=`<div class="joy-grid">
+    <div class="joy-cell"><div class="num">${d30}<small> 天</small></div><div class="note">近 30 天训练</div></div>
+    <div class="joy-cell"><div class="num" style="color:${avg>=0?"var(--forest)":"var(--terra)"}">${avg>=0?"+":""}${avg}</div><div class="note">平均爽感<br><span style="font-size:10.5px">练后 − 练前（1-5）</span></div></div>
+    ${slGood.length?`<div class="joy-cell"><div class="num">${okPct}<small>%</small></div><div class="note">睡足 7h+ 时<br><span style="font-size:10.5px">练后状态好（4-5）</span></div></div>`:""}
+    </div>
+    <div class="advice" style="margin:14px 0 0;padding:12px 14px">${joyLine()}</div>`;}
+/* —— 训练页总渲染 —— */
+function rTrain(){if(!$("lDate").value)$("lDate").value=today();
+  if(!$("exRows").children.length)addExRow();
+  syncFormDate();rWeekPlan();rProgress();rLogsAgg();rJoy();
+  const ws=trainWeek,now=weekStart(today());
+  $("trWeekTag").textContent=ws===now?"进行中":ws<now?"已过去":"计划";
+  $("trWeekLabel").textContent=weekLabel(trainWeek)+(ws===now?"（本周）":"");}
+/* —— 开启新的一周：把当前周已练的安排复制成下周计划（练完自动变打卡） —— */
+window.newWeek=function(){const o=curOwner();if(!o){toast("请先选择成员档案","err");return;}
+  const ws=trainWeek,src=[];for(let i=0;i<7;i++){const rec=owned("logs").find(x=>x.date===addDays(ws,i));if(rec&&isDone(rec))src.push({i,exs:exOf(rec).map(e=>({name:e.name,category:e.category,duration:e.duration}))});}
+  const nxt=addDays(ws,7);let created=0;
+  src.forEach(s=>{const nd=addDays(nxt,s.i);if(!owned("logs").find(x=>x.date===nd)){const rec={id:uid(),owner:o,date:nd,exercises:s.exs,planned:true,done:false,kind:recCat({exercises:s.exs}),name:recName({exercises:s.exs}),createdAt:now()};upRec(rec);T.logs.push(rec);created++;}});
+  if(created){saveT("logs");trainWeek=nxt;toast(`已开启新的一周，沿用 ${created} 天的安排（可随时改）`,"ok");}
+  else if(ws<weekStart(today()))toast("这是历史周；要看下周请点「下周 ›」");
+  else if(!src.length)toast("这一周还没有练过的日子，无从复制——先练起来吧");
+  else toast("下一周已有安排，未重复添加");
+  rTrain();};
 
 /* ================= 习惯 ================= */
 window.addHabit=function(){const o=curOwner();const n=$("hNew").value.trim();if(!n){toast("填写习惯名称","err");return;}const rec={id:uid(),owner:o,name:n,createdAt:now()};upRec(rec);T.habits.push(rec);saveT("habits");$("hNew").value="";toast("习惯已添加");rHabits();};
@@ -2013,25 +2147,66 @@ function rHabitsYear(){
 }
 
 /* ================= 复盘 ================= */
+/* —— 复盘自动小结：训练 / 习惯 / 饮食 / 体重，每行数字 + 一句自动文案 —— */
+function renderReviewStats(ws){
+  const box=$("rStats");if(!box)return;
+  const o=curOwner(),t=today(),now=weekStart(t);const rows=[];
+  /* ① 训练：本周 vs 上周 已练天数 */
+  const cntDay=w=>{let n=0;for(let i=0;i<7;i++)if(owned("logs").some(x=>x.date===addDays(w,i)&&isDone(x)))n++;return n;};
+  const curT=cntDay(ws),preT=cntDay(addDays(ws,-7));
+  if(curT||preT){const d=curT-preT;
+    rows.push({lab:"训练",num:curT+" 天",note:`上周 ${preT} 天`,
+      tag:d>0?"↑"+d:d<0?"↓"+(-d):"",
+      line:curT?`这周练了 ${curT} 天${d>0?`，比上周多 ${d} 天`:d<0?`，比上周少 ${-d} 天`:"，跟上周一样多"}`:`这周还没开练——上周练了 ${preT} 天`});}
+  /* ② 习惯：本周完成率（按已过天数）+ 连续达标周数（≥60% 为达标） */
+  const hs=T.habits.filter(x=>x.owner===o);
+  if(hs.length&&ws<=now){
+    const span=Math.max(1,Math.min(7,Math.round((parseD(t)-parseD(ws))/864e5)+1));
+    const hk=w=>T.checks.filter(x=>x.owner===o&&x.done&&x.date>=w&&x.date<=addDays(w,6)).length;
+    const done=hk(ws),pct=Math.round(done/(hs.length*span)*100);
+    const per=hs.map(h=>({name:h.name,n:T.checks.filter(x=>x.owner===o&&x.habitId===h.id&&x.done&&x.date>=ws&&x.date<=addDays(ws,6)).length}));
+    const best=per.slice().sort((a,b)=>b.n-a.n)[0];
+    let streak=0;for(let k=0;k<12;k++){if(hk(addDays(ws,-k*7))>=hs.length*7*.6)streak++;else break;}
+    rows.push({lab:"习惯",num:pct+"%",note:`完成 ${done} / ${hs.length*span} 次${streak?` · 连续 ${streak} 周达标`:""}`,tag:"",
+      line:best&&best.n?`最稳的是「${best.name}」，本周 ${best.n} 天`:`习惯还没开打，从最小的一件开始`});}
+  /* ③ 饮食：吃出缺口的天数（有记录且摄入不超消耗） */
+  const p=profile(o),lb=latestBody(o),c=p&&lb?calc(p,lb.kg):null;
+  if(c){let g=0,n=0;for(let i=0;i<7;i++){const d=addDays(ws,i);if(d>t)break;n++;
+      const eaten=byDate("meals",o,d).reduce((s,m)=>s+(+m.kcal||0),0);if(eaten>0&&eaten<=c.tdee)g++;}
+    if(n)rows.push({lab:"饮食",num:g+"/"+n+" 天",note:"吃出缺口（录了且没超）",tag:"",
+      line:g?`${n-g===0?"每天都":"有 "+g+" 天"}守住缺口${n-g?`，${n-g} 天超了消耗`:""}`:`这周还没录到缺口日，先把三餐录起来`});}
+  /* ④ 体重：周内变化 */
+  const bw=owned("body").filter(x=>x.date>=ws&&x.date<=addDays(ws,6)).sort((a,b)=>a.date<b.date?-1:1);
+  if(bw.length){const a=bw[0].kg,b=bw[bw.length-1].kg,dd=round(b-a,1);
+    rows.push({lab:"体重",num:(dd>0?"+":"")+dd+" kg",note:`${a} → ${b} · 记 ${bw.length} 天`,tag:"",
+      line:Math.abs(dd)<0.3?"体重很稳，按现在节奏继续":dd<0?`这周掉了 ${-dd} kg，方向对了`:`回弹 ${dd} kg，先看水分与睡眠，不必慌`});}
+  const line=rows.find(r=>/^(训练|体重)/.test(r.lab))||rows[0];
+  box.innerHTML=rows.length?
+    `${rows.map(r=>`<div class="stat-mini"><span>${r.lab}${r.tag?` <span class="pill ${r.tag[0]==="↓"?"y":"g"}" style="font-weight:400">${r.tag}</span>`:""}
+      <span class="note" style="display:block;font-size:11px">${r.note}</span></span><b>${r.num}</b></div>`).join("")}
+    <div class="note" style="margin-top:10px;padding:9px 11px;background:var(--card2);border-radius:11px">${line?line.line:""}</div>`
+    :'<div class="empty" style="padding:12px 4px">这周还没有记录。练几天、打打卡，这里会自动长出每周小结。</div>';
+}
 window.loadReview=function(){const o=curOwner();const ws=weekStart($("rWeek").value||today());const r=T.reviews.find(x=>x.owner===o&&x.week===ws);
-  ["rDone","rWin","rBlock","rNext"].forEach(k=>$(k).value=r?r[k]||"":"");
-  const rows=owned("body").filter(x=>x.date>=ws&&x.date<=addDays(ws,6)).sort((a,b)=>a.date<b.date?-1:1);
-  const m=$("rMetrics");if(rows.length)m.innerHTML=`本周记录 ${rows.length} 天 · 平均 ${round(rows.reduce((s,x)=>s+x.kg,0)/rows.length,1)} kg`+(rows.length>1?` · 周内波动 ${round(rows[rows.length-1].kg-rows[0].kg,1)} kg`:"");
-  else m.innerHTML="本周暂无身体记录。";
-  $("rSaved").textContent=r?"已保存 ✓":"";
+  $("rNext").value=r?r.next||"":"";
+  $("rSaved").textContent=r&&r.next?"已保存 ✓":"";
+  renderReviewStats(ws);
 };
 window.saveReview=function(){const o=curOwner();const ws=weekStart($("rWeek").value||today());
   const ex=T.reviews.find(x=>x.owner===o&&x.week===ws);const rec=ex||{id:uid(),owner:o,week:ws,createdAt:now()};
-  rec.done=$("rDone").value.trim();rec.win=$("rWin").value.trim();rec.block=$("rBlock").value.trim();rec.next=$("rNext").value.trim();
+  if(ex)["done","win","block"].forEach(k=>{if(ex[k]!=null)rec[k]=ex[k];}); /* 旧字段只读保留，不再采集 */
+  rec.next=$("rNext").value.trim();
+  if(!rec.next&&!ex){toast("写一句下周想做的一件事吧","err");return;}
   upRec(rec);if(ex){T.reviews[T.reviews.indexOf(ex)]=rec;}else T.reviews.push(rec);
   saveT("reviews");toast("本周复盘已保存");rReview();};
 function rReview(){
-  if(!$("rWeek").value){const w=parseD(today());w.setDate(w.getDate()-7);$("rWeek").value=dstr(w);}
+  if(!$("rWeek").value)$("rWeek").value=weekStart(today()); /* 默认复盘本周 */
   const o=curOwner();loadReview();
   const list=T.reviews.filter(x=>x.owner===o).sort((a,b)=>b.week.localeCompare(a.week));
-  $("rList").innerHTML=list.length?list.slice(0,12).map(r=>`<div style="border-bottom:1px dashed var(--line2);padding:9px 2px">
-    <b>${esc(r.week)}</b> <button class="btn ghost mini" style="float:right" onclick="loadRevWeek('${r.week}')">载入</button>
-    ${r.done?`<div class="note">✓ ${esc(r.done)}</div>`:""}${r.win?`<div class="note">✦ ${esc(r.win)}</div>`:""}${r.block?`<div class="note">✕ ${esc(r.block)}</div>`:""}</div>`).join(""):'<div class="empty">还没有复盘记录</div>';
+  $("rList").innerHTML=list.length?list.slice(0,12).map(r=>{const brief=[r.next,r.done,r.win,r.block].find(x=>x&&x.trim());
+    return `<div style="border-bottom:1px dashed var(--line2);padding:9px 2px">
+      <b>${esc(r.week)}</b> <button class="btn ghost mini" style="float:right" onclick="loadRevWeek('${r.week}')">载入</button>
+      ${brief?`<div class="note" style="margin-top:4px">${esc(brief)}</div>`:""}</div>`;}).join(""):'<div class="empty">还没有复盘记录</div>';
   rMoodDist();rWeightEnergyChart();
 }
 window.loadRevWeek=function(ws){$("rWeek").value=ws;go("review");};

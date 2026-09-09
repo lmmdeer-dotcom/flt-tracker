@@ -1,4 +1,4 @@
-const CACHE="flt-v1.9.5";
+const CACHE="flt-v1.10.0";
 const PRECACHE=["./","./index.html","./manifest.json","./icons/icon-192.png","./icons/icon-512.png"];
 
 self.addEventListener("install",e=>{
@@ -13,6 +13,16 @@ self.addEventListener("activate",e=>{
 self.addEventListener("fetch",e=>{
   if(e.request.method!=="GET")return;
   const sameOrigin=new URL(e.request.url).origin===self.location.origin;
+  if(e.request.mode==="navigate"||e.request.destination==="document"){
+    e.respondWith(fetch(e.request).then(res=>{
+      if(res.ok){
+        const cp=res.clone();
+        caches.open(CACHE).then(c=>c.put(e.request,cp)).catch(()=>{});
+      }
+      return res;
+    }).catch(()=>caches.match(e.request).then(hit=>hit||caches.match("./index.html"))));
+    return;
+  }
   e.respondWith(caches.match(e.request).then(hit=>{
     if(hit)return hit;
     const p=fetch(e.request);
